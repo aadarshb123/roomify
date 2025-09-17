@@ -1,6 +1,6 @@
 # roomify
 
 
-run "npm run dev" in my-react-app
+# run "npm run dev" in my-react-app (frontend)
 
-run "npm run dev" in server
+# run "npm run dev" in server (backend)
