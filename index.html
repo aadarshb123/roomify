@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cozy Ideas</title>
+  <meta name="description" content="App‑like responsive gallery with login, categories, and refreshing feed." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="locked">
+  <!-- Animated background layer -->
+  <div class="bg" aria-hidden="true">
+    <div class="blob one"></div>
+    <div class="blob two"></div>
+    <div class="blob three"></div>
+    <div class="animal" role="img" aria-label="fox walking">🦊</div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="top" role="banner">
+      <div class="logo" aria-hidden="true"></div>
+      <div class="title">Cozy Ideas</div>
+      <button id="refreshBtn" class="btn-ghost" aria-label="Refresh images">⟳</button>
+    </div>
+    <label class="search" for="q">
+      <span aria-hidden="true">🔍</span>
+      <input id="q" type="search" placeholder="Search" autocomplete="off" />
+      <button type="button" id="clear" aria-label="Clear search" hidden>✖</button>
+    </label>
+  </header>
+
+  <!-- Chips -->
+  <nav class="chips" aria-label="Categories">
+    <button class="chip" aria-pressed="true" data-cat="all">All</button>
+    <button class="chip" aria-pressed="false" data-cat="bedroom">Bedroom</button>
+    <button class="chip" aria-pressed="false" data-cat="kitchen">Kitchen</button>
+    <button class="chip" aria-pressed="false" data-cat="decor">Home Decor</button>
+  </nav>
+
+  <!-- Feed -->
+  <main class="feed" id="feed" aria-live="polite"></main>
+
+  <!-- Bottom nav -->
+  <footer class="nav" role="navigation" aria-label="Bottom">
+    <div class="tabs">
+      <a class="tab active" href="#home" aria-current="page"><span class="ico">🏠</span><span class="sr-only">Home</span></a>
+      <a class="tab" href="#search"><span class="ico">🔎</span><span class="sr-only">Search</span></a>
+      <a class="tab" href="#create"><span class="ico">➕</span><span class="sr-only">Create</span></a>
+      <a class="tab" href="#favorites" id="favoritesTab"><span class="ico">🤍</span><span class="sr-only">Favorites</span></a>
+      <a class="tab" href="#profile" id="profileTab"><span class="ico">👤</span><span class="sr-only">Profile</span></a>
+    </div>
+  </footer>
+
+  <!-- LOGIN OVERLAY -->
+  <section id="authView" class="overlay open" aria-modal="true" role="dialog" aria-labelledby="authTitle">
+    <div class="auth-card">
+      <div class="row" style="margin-bottom:.5rem">
+        <h2 id="authTitle" style="margin:0">Sign in</h2>
+      </div>
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="row" style="gap:.4rem">
+            <input id="password" name="password" type="password" placeholder="••••••••" required minlength="6" style="flex:1" autocomplete="current-password" />
+            <button type="button" class="link" id="togglePw" aria-pressed="false" aria-label="Show password">Show</button>
+          </div>
+        </div>
+        <div class="row" style="justify-content:flex-start">
+          <label style="display:flex;align-items:center;gap:.45rem"><input id="remember" type="checkbox" /> Remember me</label>
+        </div>
+        <div class="err" id="authErr" aria-live="polite"></div>
+        <button class="btn" id="signInBtn" type="submit" disabled>Sign in</button>
+        <div class="row" style="margin-top:.6rem">
+          <a href="signup.html" class="link">Create account</a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- PROFILE OVERLAY -->
+  <section id="profileView" class="overlay" aria-modal="true" role="dialog" aria-labelledby="profileTitle">
+    <div class="auth-card">
+      <div class="row" style="margin-bottom:.5rem">
+        <h2 id="profileTitle" style="margin:0">Profile</h2>
+        <button class="link" id="closeProfile" aria-label="Close profile">Close</button>
+      </div>
+      <p id="welcome">Welcome!</p>
+      <div class="row">
+        <button class="btn" id="signOutBtn">Sign out</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGN UP OVERLAY -->
+  <section id="signupView" class="overlay" aria-modal="true" role="dialog" aria-labelledby="signupTitle">
+    <div class="auth-card">
+      <div class="row" style="margin-bottom:.5rem">
+        <h2 id="signupTitle" style="margin:0">Create Account</h2>
+        <button class="link" id="closeSignup" aria-label="Close signup">Back</button>
+      </div>
+      <form id="signupForm" novalidate>
+        <div class="field">
+          <label for="signupEmail">Email</label>
+          <input id="signupEmail" name="email" type="email" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="signupPassword">Password</label>
+          <div class="row" style="gap:.4rem">
+            <input id="signupPassword" name="password" type="password" placeholder="••••••••" required minlength="6" style="flex:1" autocomplete="new-password" />
+            <button type="button" class="link" id="toggleSignupPw" aria-pressed="false" aria-label="Show password">Show</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="confirmPassword">Confirm Password</label>
+          <input id="confirmPassword" name="confirmPassword" type="password" placeholder="••••••••" required minlength="6" autocomplete="new-password" />
+        </div>
+        <div class="err" id="signupErr" aria-live="polite"></div>
+        <button class="btn" id="createAccountBtn" type="submit" disabled>Create Account</button>
+        <div class="row" style="margin-top:.6rem">
+          <button type="button" class="link" id="backToLogin">Already have an account?</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <script>
+    console.log('Basic script loaded!');
+    
+    // Test if we can find elements
+    window.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded!');
+      
+      const email = document.getElementById('email');
+      const password = document.getElementById('password');
+      const togglePw = document.getElementById('togglePw');
+      const signInBtn = document.getElementById('signInBtn');
+      
+      console.log('Elements found:', {
+        email: !!email,
+        password: !!password,
+        togglePw: !!togglePw,
+        signInBtn: !!signInBtn
+      });
+      
+      // Simple password toggle
+      if(togglePw && password) {
+        togglePw.addEventListener('click', function() {
+          console.log('Toggle clicked!');
+          if(password.type === 'password') {
+            password.type = 'text';
+            togglePw.textContent = 'Hide';
+          } else {
+            password.type = 'password';
+            togglePw.textContent = 'Show';
+          }
+        });
+      }
+      
+      // Simple validation
+      function validate() {
+        if(!email || !password || !signInBtn) return;
+        
+        const emailOk = email.value.includes('@');
+        const passOk = password.value.length >= 6;
+        const valid = emailOk && passOk;
+        
+        signInBtn.disabled = !valid;
+        console.log('Validation:', { emailOk, passOk, valid });
+      }
+      
+      if(email) email.addEventListener('input', validate);
+      if(password) password.addEventListener('input', validate);
+      
+      // Simple login
+      const loginForm = document.getElementById('loginForm');
+      if(loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          console.log('Form submitted!');
+          
+          if(email.value.includes('@') && password.value.length >= 6) {
+            console.log('Login successful!');
+            document.body.classList.remove('locked');
+            document.getElementById('authView').classList.remove('open');
+            
+            // Initialize feed with images
+            setTimeout(() => {
+              initializeFeed();
+            }, 100);
+          } else {
+            alert('Please enter valid email and password (6+ chars)');
+          }
+        });
+      }
+      
+      validate();
+      
+      // Check if user is already logged in
+      const savedEmail = localStorage.getItem('userEmail');
+      if(savedEmail) {
+        console.log('User already logged in:', savedEmail);
+        document.body.classList.remove('locked');
+        document.getElementById('authView').classList.remove('open');
+        setTimeout(() => {
+          initializeFeed();
+        }, 100);
+      }
+    });
+    
+    // Function to load images
+    function initializeFeed() {
+      console.log('Initializing feed with images...');
+      
+      const feed = document.getElementById('feed');
+      if(!feed) {
+        console.error('Feed element not found');
+        return;
+      }
+      
+      // Generate image data
+      const images = generateImages(48);
+      
+      // Save images data for favorites reference
+      localStorage.setItem('allImages', JSON.stringify(images));
+      
+      // Get current favorites to show correct heart state
+      const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+      
+      // Create image cards
+      const imageCards = images.map(item => {
+        const faved = favorites.includes(item.id.toString());
+        return `
+          <article class="card" data-id="${item.id}" data-cat="${item.cat}">
+            <img src="${item.src}" alt="${item.title}" loading="lazy"/>
+            <div class="meta">
+              <span>${item.title}</span>
+              <button class="heart" aria-pressed="${faved}" aria-label="Toggle favorite">${faved ? '❤' : '♡'}</button>
+            </div>
+          </article>
+        `;
+      }).join('');
+      
+      feed.innerHTML = imageCards;
+      console.log('Loaded', images.length, 'images');
+      
+      // Heart clicks are handled by global listener
+    }
+    
+    // Simple image generator
+    function generateImages(count = 48) {
+      const cats = ['bedroom','kitchen','decor','living'];
+      const items = [];
+      const now = Date.now();
+      
+      for(let i = 0; i < count; i++) {
+        const id = now + i;
+        const cat = cats[i % cats.length];
+        const w = 600 + Math.floor(Math.random() * 400);
+        const h = 700 + Math.floor(Math.random() * 500);
+        const seed = `${cat}-${id}-${Math.floor(Math.random() * 9999)}`;
+        const src = `https://picsum.photos/seed/${encodeURIComponent(seed)}/${w}/${h}`;
+        const titleMap = { bedroom: 'Cozy Bedroom', kitchen: 'Warm Kitchen', decor: 'Home Decor', living: 'Living Room' };
+        const title = `${titleMap[cat]} #${i + 1}`;
+        const likes = Math.floor(Math.random() * 20);
+        
+        items.push({ id, cat, title, likes, src });
+      }
+      
+      return items;
+    }
+    
+    // Profile functionality
+    function setupProfile() {
+      const profileTab = document.getElementById('profileTab');
+      const profileView = document.getElementById('profileView');
+      const closeProfile = document.getElementById('closeProfile');
+      const signOutBtn = document.getElementById('signOutBtn');
+      const welcome = document.getElementById('welcome');
+      
+      if(profileTab) {
+        profileTab.addEventListener('click', function(e) {
+          e.preventDefault();
+          console.log('Profile tab clicked');
+          
+          const userEmail = localStorage.getItem('userEmail');
+          if(userEmail) {
+            // Show profile
+            if(welcome) {
+              welcome.textContent = `Welcome, ${userEmail}!`;
+            }
+            if(profileView) {
+              profileView.classList.add('open');
+            }
+          } else {
+            // Show login if not logged in
+            document.getElementById('authView').classList.add('open');
+            document.body.classList.add('locked');
+          }
+        });
+      }
+      
+      if(closeProfile) {
+        closeProfile.addEventListener('click', function() {
+          console.log('Close profile clicked');
+          if(profileView) {
+            profileView.classList.remove('open');
+          }
+        });
+      }
+      
+      if(signOutBtn) {
+        signOutBtn.addEventListener('click', function() {
+          console.log('Sign out clicked');
+          localStorage.removeItem('userEmail');
+          
+          // Close profile
+          if(profileView) {
+            profileView.classList.remove('open');
+          }
+          
+          // Show login
+          document.getElementById('authView').classList.add('open');
+          document.body.classList.add('locked');
+          
+          // Clear feed
+          const feed = document.getElementById('feed');
+          if(feed) feed.innerHTML = '';
+        });
+      }
+    }
+    
+    
+    // Favorites tab functionality
+    function setupFavorites() {
+      const favoritesTab = document.getElementById('favoritesTab');
+      const feed = document.getElementById('feed');
+      
+      if(favoritesTab) {
+        favoritesTab.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          // Get saved favorites and images
+          const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+          const allImages = JSON.parse(localStorage.getItem('allImages') || '[]');
+          
+          if(favorites.length === 0) {
+            feed.innerHTML = '<div style="padding: 2rem; text-align: center; opacity: 0.7;">No favorites yet. Tap ❤ on any image to save it!</div>';
+            return;
+          }
+          
+          // Find favorited images
+          const favoriteImages = allImages.filter(img => favorites.includes(img.id.toString()));
+          
+          if(favoriteImages.length === 0) {
+            feed.innerHTML = '<div style="padding: 2rem; text-align: center; opacity: 0.7;">Favorited images not found. Try going back to Home and re-favoriting some images.</div>';
+            return;
+          }
+          
+          // Create HTML for favorite images
+          const favoriteCards = favoriteImages.map(item => {
+            return `
+              <article class="card" data-id="${item.id}" data-cat="${item.cat}">
+                <img src="${item.src}" alt="${item.title}" loading="lazy"/>
+                <div class="meta">
+                  <span>${item.title}</span>
+                  <button class="heart" aria-pressed="true" aria-label="Remove from favorites">❤</button>
+                </div>
+              </article>
+            `;
+          }).join('');
+          
+          feed.innerHTML = favoriteCards;
+        });
+      }
+    }
+    
+    // Home tab functionality (to go back to all images)
+    function setupHomTab() {
+      const homeTab = document.querySelector('a[href="#home"]'); // Home tab
+      if(homeTab) {
+        homeTab.addEventListener('click', function(e) {
+          e.preventDefault();
+          initializeFeed(); // Reload all images with correct heart states
+        });
+      }
+    }
+    
+    // SINGLE GLOBAL HEART CLICK HANDLER - SET UP ONCE
+    let heartHandlerSetup = false;
+    function setupHeartHandler() {
+      if(heartHandlerSetup) return;
+      
+      document.addEventListener('click', function(e) {
+        if(e.target.classList.contains('heart')) {
+          const card = e.target.closest('.card');
+          if(!card) return;
+          
+          const imageId = card.dataset.id;
+          let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+          
+          if(favorites.includes(imageId)) {
+            // Remove from favorites
+            favorites = favorites.filter(id => id !== imageId);
+            e.target.textContent = '♡';
+            e.target.setAttribute('aria-pressed', 'false');
+          } else {
+            // Add to favorites
+            favorites.push(imageId);
+            e.target.textContent = '❤';
+            e.target.setAttribute('aria-pressed', 'true');
+          }
+          
+          localStorage.setItem('favorites', JSON.stringify(favorites));
+          console.log('Favorites saved:', favorites.length, 'items');
+        }
+      });
+      
+      heartHandlerSetup = true;
+      console.log('Heart handler setup complete');
+    }
+    
+    // Initialize everything after DOM loads
+    window.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded - setting up all functionality');
+      setupHeartHandler(); // Setup heart clicks ONCE
+      setupProfile();
+      setupFavorites();
+      setupHomTab();
+    });
+  </script>
+  
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

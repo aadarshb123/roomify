@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Create Account - Cozy Ideas</title>
+  <meta name="description" content="Create your Cozy Ideas account" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Animated background layer -->
+  <div class="bg" aria-hidden="true">
+    <div class="blob one"></div>
+    <div class="blob two"></div>
+    <div class="blob three"></div>
+    <div class="animal" role="img" aria-label="fox walking">🦊</div>
+  </div>
+
+  <!-- Signup Form -->
+  <div class="signup-page">
+    <div class="auth-card" style="margin: 6vh auto; max-width: 420px;">
+      <div class="row" style="margin-bottom:.5rem">
+        <h2 style="margin:0">Create Account</h2>
+        <a href="index.html" class="link">Back to Sign In</a>
+      </div>
+      <form id="signupForm" novalidate>
+        <div class="field">
+          <label for="fullName">Full Name</label>
+          <input id="fullName" name="fullName" type="text" placeholder="Your Name" required autocomplete="name" />
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="row" style="gap:.4rem">
+            <input id="password" name="password" type="password" placeholder="••••••••" required minlength="6" style="flex:1" autocomplete="new-password" />
+            <button type="button" class="link" id="togglePw" aria-pressed="false" aria-label="Show password">Show</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="confirmPassword">Confirm Password</label>
+          <input id="confirmPassword" name="confirmPassword" type="password" placeholder="••••••••" required minlength="6" autocomplete="new-password" />
+        </div>
+        <div class="row" style="justify-content:flex-start">
+          <label style="display:flex;align-items:center;gap:.45rem">
+            <input id="terms" type="checkbox" required /> 
+            I agree to the <a href="#" class="link">Terms of Service</a>
+          </label>
+        </div>
+        <div class="err" id="signupErr" aria-live="polite"></div>
+        <button class="btn" id="createAccountBtn" type="submit" disabled>Create Account</button>
+        <div class="row" style="margin-top:.6rem">
+          <a href="index.html" class="link">Already have an account? Sign in</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="./js/signup.js"></script>
+</body>
+</html>
