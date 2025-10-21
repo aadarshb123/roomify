@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { Platform } from 'react-native';
 import {
   User,
   createUserWithEmailAndPassword,
@@ -6,7 +7,6 @@ import {
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
-  signInWithPopup,
   updateProfile,
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
@@ -77,11 +77,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithGoogle = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      // Google Sign-In only works on web with signInWithPopup
+      // For mobile, we would need to use Expo AuthSession or native Google Sign-In
+      if (Platform.OS === 'web') {
+        const { signInWithPopup } = await import('firebase/auth');
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+      } else {
+        // For mobile apps, show a helpful message
+        throw new Error('Google Sign-In is currently only available on web. Please use email/password to sign in on mobile.');
+      }
     } catch (error: any) {
       console.error('Google sign in error:', error);
-      throw new Error(error.message);
+      throw error;
     }
   };
 

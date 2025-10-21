@@ -1,47 +1,68 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Text } from 'react-native';
 import HomeScreen from '../screens/HomeScreen';
-import ProfileScreen from '../screens/ProfileScreen';
-import DesignRoomScreen from '../screens/DesignRoomScreen';
+import SearchScreen from '../screens/SearchScreen';
 import AddImageScreen from '../screens/AddImageScreen';
+import FavoritesScreen from '../screens/FavoritesScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
+
+const TabBarIcon = ({ icon, color }: { icon: string; color: string }) => (
+  <Text style={{ fontSize: 24, color }}>{icon}</Text>
+);
 
 export default function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#999',
+        tabBarActiveTintColor: '#1a1a1a',
+        tabBarInactiveTintColor: '#666',
+        tabBarStyle: {
+          backgroundColor: '#EDE8DC',
+          borderTopWidth: 0,
+          elevation: 0,
+          height: 60,
+          paddingBottom: 8,
+        },
+        tabBarShowLabel: false,
       }}
     >
       <Tab.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarLabel: 'Explore',
+          tabBarIcon: ({ color }) => <TabBarIcon icon="🏠" color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Search"
+        component={SearchScreen}
+        options={{
+          tabBarIcon: ({ color }) => <TabBarIcon icon="🔍" color={color} />,
         }}
       />
       <Tab.Screen
         name="AddImage"
         component={AddImageScreen}
         options={{
-          tabBarLabel: 'Add',
+          tabBarIcon: ({ color }) => <TabBarIcon icon="➕" color={color} />,
         }}
       />
       <Tab.Screen
-        name="DesignRoom"
-        component={DesignRoomScreen}
+        name="Favorites"
+        component={FavoritesScreen}
         options={{
-          tabBarLabel: 'Design',
+          tabBarIcon: ({ color }) => <TabBarIcon icon="❤️" color={color} />,
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarLabel: 'Profile',
+          tabBarIcon: ({ color }) => <TabBarIcon icon="👤" color={color} />,
         }}
       />
     </Tab.Navigator>
