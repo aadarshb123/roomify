@@ -1,6 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ImageBackground, Alert, ActivityIndicator } from 'react-native';
+import { Alert, ActivityIndicator } from 'react-native';
+import styled from 'styled-components/native';
 import { useAuth } from '../context/AuthContext';
+import logoFull from '../../assets/logo-full.png';
+import googleG from '../../assets/web_light_rd_na.svg';
+
+const COLOR = {
+  bg: '#EDE8DC',
+  text: '#111827',
+  cta: '#111827',
+  white: '#FFFFFF',
+  border: '#111827',
+  overlay: 'rgba(230,218,201,0.9)',
+};
+
+const BG_URI = 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1600';
 
 export default function SignupScreen({ navigation }: any) {
   const [name, setName] = useState('');
@@ -14,12 +28,10 @@ export default function SignupScreen({ navigation }: any) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-
     if (password.length < 6) {
       Alert.alert('Error', 'Password must be at least 6 characters');
       return;
     }
-
     setLoading(true);
     try {
       await signUp(email, password, name);
@@ -42,189 +54,186 @@ export default function SignupScreen({ navigation }: any) {
   };
 
   return (
-    <ImageBackground
-      source={{ uri: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800' }}
-      style={styles.backgroundImage}
-      resizeMode="cover"
-    >
-      <View style={styles.overlay}>
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <Text style={styles.logo}>🏠</Text>
-            <Text style={styles.brandName}>Roomify</Text>
-            <Text style={styles.title}>Register</Text>
-            <Text style={styles.subtitle}>Create your account to get started.</Text>
-          </View>
+    <Background source={{ uri: BG_URI }} resizeMode="cover">
+      <Tint />
+      <Container>
+        <LogoFull source={logoFull} resizeMode="contain" />
 
-          <View style={styles.formContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Name"
-              placeholderTextColor="#999"
-              autoCapitalize="words"
-              value={name}
-              onChangeText={setName}
-            />
+        <FormGroup>
+          <Field
+            placeholder="Name"
+            placeholderTextColor="#999"
+            autoCapitalize="words"
+            value={name}
+            onChangeText={setName}
+          />
+          <Field
+            placeholder="Email"
+            placeholderTextColor="#999"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
+          <Field
+            placeholder="Password"
+            placeholderTextColor="#999"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor="#999"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-            />
+          <CTA onPress={handleSignup} disabled={loading}>
+            {loading ? <ActivityIndicator color={COLOR.bg} /> : <CTAText>REGISTER</CTAText>}
+          </CTA>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#999"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
+          <OrRow>
+            <Line />
+            <OrText>OR</OrText>
+            <Line />
+          </OrRow>
 
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleSignup}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Register</Text>
-              )}
-            </TouchableOpacity>
+          <SocialRow>
+            <Circle onPress={handleGoogleSignIn} activeOpacity={0.8}>
+              <Icon source={googleG} resizeMode="cover" />
+            </Circle>
+          </SocialRow>
 
-            <Text style={styles.orText}>Or Register with</Text>
-
-            <TouchableOpacity
-              style={styles.googleButton}
-              onPress={handleGoogleSignIn}
-              disabled={loading}
-            >
-              <Text style={styles.googleButtonText}>Google</Text>
-            </TouchableOpacity>
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                <Text style={styles.loginText}>Login</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </View>
-    </ImageBackground>
+          <BottomLinks>
+            <Muted>ALREADY HAVE AN ACCOUNT?</Muted>
+            <Underline onPress={() => navigation.navigate('Login')}>
+              LOG IN
+            </Underline>
+          </BottomLinks>
+        </FormGroup>
+      </Container>
+    </Background>
   );
 }
 
-const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(230, 220, 200, 0.85)',
-  },
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 60,
-  },
-  logo: {
-    fontSize: 32,
-    marginBottom: 5,
-  },
-  brandName: {
-    fontSize: 42,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 15,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#4a4a4a',
-  },
-  formContainer: {
-    width: '100%',
-    maxWidth: 400,
-  },
-  input: {
-    width: '100%',
-    height: 55,
-    backgroundColor: 'rgba(230, 220, 200, 0.6)',
-    borderWidth: 1.5,
-    borderColor: '#2a2a2a',
-    borderRadius: 28,
-    paddingHorizontal: 25,
-    marginBottom: 20,
-    fontSize: 16,
-    color: '#1a1a1a',
-  },
-  button: {
-    width: '100%',
-    height: 55,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 30,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  footerText: {
-    color: '#1a1a1a',
-    fontSize: 14,
-  },
-  loginText: {
-    color: '#1a1a1a',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  orText: {
-    textAlign: 'center',
-    color: '#4a4a4a',
-    fontSize: 14,
-    marginBottom: 15,
-  },
-  googleButton: {
-    width: '100%',
-    height: 55,
-    backgroundColor: '#fff',
-    borderRadius: 28,
-    borderWidth: 1.5,
-    borderColor: '#2a2a2a',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  googleButtonText: {
-    color: '#1a1a1a',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
+/* ---------- styled-components ---------- */
+
+const Background = styled.ImageBackground`
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  background-color: ${COLOR.bg};
+`;
+
+const Tint = styled.View`
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background-color: ${COLOR.overlay};
+`;
+
+const Container = styled.View`
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 24px;
+  gap: 14px;
+`;
+
+const FormGroup = styled.View`
+  width: 100%;
+  align-items: center;
+  gap: 14px;
+  transform: translateY(-20px);
+`;
+
+const LogoFull = styled.Image`
+  width: 100%;
+  max-width: 400px;
+  height: 85px;
+  margin-bottom: 50px;
+`;
+
+const Field = styled.TextInput`
+  width: 100%;
+  max-width: 400px;
+  height: 54px;
+  border-radius: 28px;
+  padding: 0 22px;
+  font-size: 16px;
+  color: ${COLOR.text};
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid ${COLOR.border};
+`;
+
+const CTA = styled.TouchableOpacity`
+  width: 100%;
+  max-width: 400px;
+  height: 56px;
+  background-color: ${COLOR.cta};
+  border-radius: 28px;
+  justify-content: center;
+  align-items: center;
+  border: 1.5px solid ${COLOR.border};
+`;
+
+const CTAText = styled.Text`
+  color: ${COLOR.bg};
+  font-size: 18px;
+  font-weight: 500;
+`;
+
+const OrRow = styled.View`
+  width: 100%;
+  max-width: 400px;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const Line = styled.View`
+  flex: 1;
+  height: 1px;
+  background-color: ${COLOR.text};
+  opacity: 0.4;
+`;
+
+const OrText = styled.Text`
+  color: ${COLOR.text};
+  margin: 0 12px;
+`;
+
+const SocialRow = styled.View`
+  width: 100%;
+  max-width: 400px;
+  flex-direction: row;
+  justify-content: center;
+`;
+
+const Circle = styled.TouchableOpacity`
+  width: 60px;
+  height: 60px;
+  border-radius: 30px;
+  background-color: ${COLOR.white};
+  justify-content: center;
+  align-items: center;
+  margin: 4px;
+  overflow: hidden;
+`;
+
+const Icon = styled.Image`
+  width: 100%;
+  height: 100%;
+  resize-mode: cover;
+`;
+
+const BottomLinks = styled.View`
+  align-items: center;
+  margin-bottom: 12px;
+`;
+
+const Muted = styled.Text`
+  color: ${COLOR.text};
+  opacity: 0.85;
+  font-size: 14px;
+`;
+
+const Underline = styled.Text`
+  color: ${COLOR.text};
+  text-decoration: underline;
+  font-size: 14px;
+  font-weight: 700;
+`;

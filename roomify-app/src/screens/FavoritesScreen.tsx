@@ -1,111 +1,346 @@
+// src/screens/FavoritesScreen.tsx
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import styled from 'styled-components/native';
+import { Dimensions } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+const COLOR = {
+  bg: '#EDE8DC',
+  text: '#111827',
+  subtext: '#666',
+  cardBg: '#FFFFFF',
+  shadow: '#000000',
+  chipBg: '#778DBE',
+  border: '#111827', // ink border to echo LoginScreen/Home/Search
+};
+
+const { width } = Dimensions.get('window');
+const H_PADDING = 16;
+const GUTTER = 14;
+const MAX_CONTENT = 860; // keeps grid nicely centered on large screens
+const COL_W = (Math.min(width, MAX_CONTENT) - H_PADDING * 2 - GUTTER) / 2;
+
+/* ---------- sample data ---------- */
 const COLLECTIONS = [
-  { id: 1, name: 'Modern Cozy Bedroom', count: 5, image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400' },
-  { id: 2, name: 'Cozy home', count: 10, image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400' },
-  { id: 3, name: 'Scandi Living Room', count: 5, image: 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=400' },
-  { id: 4, name: 'My home decor', count: 10, image: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400' },
-  { id: 5, name: 'Minimalist Spaces', count: 8, image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400' },
-  { id: 6, name: 'Warm & Inviting', count: 12, image: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=400' },
+  { id: 1, name: 'Modern Cozy Bedroom', count: 5, image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&dpr=2' },
+  { id: 2, name: 'Cozy home', count: 10, image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&dpr=2' },
+  { id: 3, name: 'Scandi Living Room', count: 5, image: 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&dpr=2' },
+  { id: 4, name: 'My home decor', count: 10, image: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800&dpr=2' },
+  { id: 5, name: 'Minimalist Spaces', count: 8, image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&dpr=2' },
+  { id: 6, name: 'Warm & Inviting', count: 12, image: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=800&dpr=2' },
 ];
 
+const FAVORITES = [
+  { id: 'f1', uri: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&dpr=2', h: 240 },
+  { id: 'f2', uri: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&dpr=2', h: 200 },
+  { id: 'f3', uri: 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&dpr=2', h: 300 },
+  { id: 'f4', uri: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&dpr=2', h: 180 },
+];
+
+/* ---------- screen ---------- */
 export default function FavoritesScreen() {
+  const insets = useSafeAreaInsets();
+
+  const leftFavs = FAVORITES.filter((_, i) => i % 2 === 0);
+  const rightFavs = FAVORITES.filter((_, i) => i % 2 === 1);
+  const isEmpty = FAVORITES.length === 0;
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Collections</Text>
+    <Screen edges={['top']}>
+      <Container
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+      >
+        {/* header */}
+        <Header>
+          <HeaderInner>
+            <Title>Favorites</Title>
+            <Subtitle>Rooms and ideas you’ve saved</Subtitle>
+          </HeaderInner>
+        </Header>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.grid}>
-          {COLLECTIONS.map((collection) => (
-            <TouchableOpacity key={collection.id} style={styles.collectionCard}>
-              <Image source={{ uri: collection.image }} style={styles.collectionImage} />
-              <TouchableOpacity style={styles.heartIcon}>
-                <Text style={styles.heartText}>❤️</Text>
-              </TouchableOpacity>
-              <View style={styles.collectionInfo}>
-                <Text style={styles.collectionName}>{collection.name}</Text>
-                <Text style={styles.collectionCount}>{collection.count}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {/* collections */}
+        <Centered>
+          <Section>
+            <TitleRow>
+              <SectionTitle>Collections</SectionTitle>
+              <CountText>{COLLECTIONS.length}</CountText>
+            </TitleRow>
 
-        <View style={{ height: 100 }} />
-      </ScrollView>
-    </View>
+            <CollectionsWrap>
+              {COLLECTIONS.map((c) => (
+                <CollectionCell key={c.id}>
+                  <CardShadow>
+                    <CardClip activeOpacity={0.85}>
+                      <CollectionImg source={{ uri: c.image }} />
+                      <CollectionInfo>
+                        <CollectionName numberOfLines={1} ellipsizeMode="tail">
+                          {c.name}
+                        </CollectionName>
+                        <Badge><BadgeText>{c.count}</BadgeText></Badge>
+                      </CollectionInfo>
+                    </CardClip>
+                  </CardShadow>
+                </CollectionCell>
+              ))}
+            </CollectionsWrap>
+          </Section>
+        </Centered>
+
+        {/* favorites grid */}
+        {isEmpty ? (
+          <EmptyWrap>
+            <HeartBig source={require('../../assets/icons/filledheart-white.png')} />
+            <EmptyTitle>No favorites yet</EmptyTitle>
+            <EmptySub>Tap the heart on any idea to save it here.</EmptySub>
+          </EmptyWrap>
+        ) : (
+          <>
+            <Centered>
+              <Section style={{ paddingBottom: 8 }}>
+                <SectionTitle>Saved ideas</SectionTitle>
+              </Section>
+            </Centered>
+
+            <Centered>
+              <Grid>
+                <Column>
+                  {leftFavs.map(item => (
+                    <CardShadow key={item.id}>
+                      <CardClip activeOpacity={0.85}>
+                        <Img source={{ uri: item.uri }} style={{ height: item.h, width: COL_W }} />
+                        <HeartFab activeOpacity={0.8} onPress={() => { /* TODO: unfavorite */ }}>
+                          <HeartIcon source={require('../../assets/icons/filledheart-white.png')} />
+                        </HeartFab>
+                      </CardClip>
+                    </CardShadow>
+                  ))}
+                </Column>
+
+                <Column>
+                  {rightFavs.map(item => (
+                    <CardShadow key={item.id}>
+                      <CardClip activeOpacity={0.85}>
+                        <Img source={{ uri: item.uri }} style={{ height: item.h, width: COL_W }} />
+                        <HeartFab activeOpacity={0.8} onPress={() => { /* TODO: unfavorite */ }}>
+                          <HeartIcon source={require('../../assets/icons/filledheart-white.png')} />
+                        </HeartFab>
+                      </CardClip>
+                    </CardShadow>
+                  ))}
+                </Column>
+              </Grid>
+            </Centered>
+          </>
+        )}
+      </Container>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#EDE8DC',
-    paddingTop: 60,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
-    color: '#1a1a1a',
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 15,
-    gap: 15,
-  },
-  collectionCard: {
-    width: '47%',
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginBottom: 5,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  collectionImage: {
-    width: '100%',
-    height: 220,
-  },
-  heartIcon: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-  },
-  heartText: {
-    fontSize: 18,
-  },
-  collectionInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    paddingTop: 10,
-  },
-  collectionName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    flex: 1,
-  },
-  collectionCount: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
-  },
-});
+/* ---------- styles ---------- */
+const Screen = styled(SafeAreaView)`
+  flex: 1;
+  background-color: ${COLOR.bg};
+`;
+
+const Container = styled.ScrollView`
+  flex: 1;
+  background-color: ${COLOR.bg};
+`;
+
+/* header */
+const Header = styled.View`
+  background-color: ${COLOR.bg};
+  padding: 22px 16px 8px 16px;
+`;
+
+const HeaderInner = styled.View`
+  width: 100%;
+  max-width: ${MAX_CONTENT}px;
+  align-self: center;
+`;
+
+const Title = styled.Text`
+  font-size: 24px;
+  font-weight: 800;
+  color: ${COLOR.text};
+`;
+
+const Subtitle = styled.Text`
+  margin-top: 6px;
+  font-size: 13px;
+  color: ${COLOR.subtext};
+`;
+
+/* center helper */
+const Centered = styled.View`
+  width: 100%;
+  align-items: center;
+`;
+
+/* sections */
+const Section = styled.View`
+  width: 100%;
+  max-width: ${MAX_CONTENT}px;
+  padding: 26px ${H_PADDING}px 12px ${H_PADDING}px;
+`;
+
+const TitleRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+`;
+
+const SectionTitle = styled.Text`
+  font-size: 18px;
+  font-weight: 700;
+  color: ${COLOR.text};
+`;
+
+const CountText = styled.Text`
+  color: ${COLOR.subtext};
+  font-size: 12px;
+`;
+
+/* collections grid */
+const CollectionsWrap = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: ${GUTTER}px;
+`;
+
+const CollectionCell = styled.View`
+  width: ${COL_W}px;
+`;
+
+const CollectionImg = styled.Image`
+  width: ${COL_W}px;
+  height: 160px;
+  background-color: #f2f2f2;
+`;
+
+const CollectionInfo = styled.View`
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.88);
+
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+
+  shadow-color: ${COLOR.shadow};
+  shadow-opacity: 0.18;
+  shadow-radius: 8px;
+  shadow-offset: 0px 4px;
+  elevation: 4;
+`;
+
+const CollectionName = styled.Text`
+  flex: 1;
+  margin-right: 8px;
+  color: ${COLOR.text};
+  font-size: 14px;
+  font-weight: 600;
+`;
+
+const Badge = styled.View`
+  min-width: 26px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  align-items: center;
+  justify-content: center;
+  background-color: ${COLOR.chipBg};
+`;
+
+const BadgeText = styled.Text`
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+`;
+
+/* favorites grid */
+const Grid = styled.View`
+  width: 100%;
+  max-width: ${MAX_CONTENT}px;
+  padding: 0 ${H_PADDING}px 8px ${H_PADDING}px;
+  flex-direction: row;
+  gap: ${GUTTER}px;
+`;
+
+const Column = styled.View`
+  flex: 1;
+  gap: ${GUTTER}px;
+`;
+
+/* shadow + clip pattern */
+const CardShadow = styled.View`
+  border-radius: 14px;
+  background-color: ${COLOR.cardBg};
+
+  shadow-color: ${COLOR.shadow};
+  shadow-opacity: 0.18;
+  shadow-radius: 10px;
+  shadow-offset: 0px 6px;
+  elevation: 6;
+`;
+
+const CardClip = styled.TouchableOpacity`
+  overflow: hidden;
+  border-radius: 14px;
+  background-color: ${COLOR.cardBg};
+  position: relative;
+`;
+
+const Img = styled.Image`
+  width: ${COL_W}px;
+  background-color: #f2f2f2;
+`;
+
+const HeartFab = styled.TouchableOpacity`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+
+  /* bigger tap target without visible bg */
+  padding: 6px;
+`;
+
+const HeartIcon = styled.Image`
+  width: 22px;
+  height: 22px;
+  resize-mode: contain;
+  opacity: 0.9;
+`;
+
+/* empty state */
+const EmptyWrap = styled.View`
+  padding: 48px 20px 72px 20px;
+  align-items: center;
+  justify-content: center;
+`;
+
+const HeartBig = styled.Image`
+  width: 56px;
+  height: 56px;
+  margin-bottom: 14px;
+  resize-mode: contain;
+`;
+
+const EmptyTitle = styled.Text`
+  font-size: 18px;
+  font-weight: 700;
+  color: ${COLOR.text};
+  margin-bottom: 6px;
+`;
+
+const EmptySub = styled.Text`
+  font-size: 13px;
+  color: ${COLOR.subtext};
+  text-align: center;
+`;

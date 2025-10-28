@@ -1,14 +1,33 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
+import styled from 'styled-components/native';
+import { Alert, Dimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 
-const STYLE_PREFERENCES = ['Modern', 'Minimalist', 'Scandinavian', 'Coastal'];
+const COLOR = {
+  bg: '#EDE8DC',        // same creamy background
+  text: '#111827',      // deep black text
+  subtext: '#444',      // softer neutral gray for secondary text
+  accent: '#111827',    // black accent for buttons/icons
+  cardBg: '#FFFFFF',
+  chipBg: '#D8D3C4',    // muted beige tone
+  chipSelectedBg: '#111827', 
+  chipText: '#111827',
+  chipTextSelected: '#EDE8DC',
+  shadow: '#000000',
+  border: '#111827',
+};
 
-const HISTORY_IMAGES = [
-  { id: 1, image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=300', liked: true },
-  { id: 2, image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=300', liked: false },
-  { id: 3, image: 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=300', liked: true },
-  { id: 4, image: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=300', liked: false },
+const { width } = Dimensions.get('window');
+const GUTTER = 12;
+const COL_W = (width - 40 - GUTTER) / 2; // 2 columns, padding sides
+
+const STYLE_PREFERENCES = ['Modern', 'Minimalist', 'Scandinavian', 'Coastal'];
+const PREF_COLORS: string[] = [
+  '#C8C3B4', // warm beige-gray
+  '#D9CAB3', // light sand
+  '#B6B8B1', // sage-gray neutral
+  '#A59D91', // taupe brown-gray
 ];
 
 export default function ProfileScreen() {
@@ -16,24 +35,20 @@ export default function ProfileScreen() {
   const [selectedTab, setSelectedTab] = useState('All History');
 
   const handleLogout = async () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-            } catch (error: any) {
-              Alert.alert('Error', error.message);
-            }
-          },
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await logout();
+          } catch (error: any) {
+            Alert.alert('Error', error.message);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const getInitials = () => {
@@ -48,297 +63,301 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Top Icons */}
-      <View style={styles.topBar}>
-        <TouchableOpacity style={styles.topIcon}>
-          <Text style={styles.iconText}>🔍</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.topIcon}>
-          <Text style={styles.iconText}>🔔</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.topIcon}>
-          <Text style={styles.iconText}>➕</Text>
-        </TouchableOpacity>
-        <View style={{ flex: 1 }} />
-        <TouchableOpacity style={styles.topIcon}>
-          <Text style={styles.iconText}>⚙️</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.topIcon} onPress={handleLogout}>
-          <Text style={styles.iconText}>🚪</Text>
-        </TouchableOpacity>
-      </View>
+    <Screen edges={['top']}>
+      <TopBar>
+        <IconButton><IconImg source={require('../../assets/icons/search.png')} /></IconButton>
+        <IconButton><IconImg source={require('../../assets/icons/Bell.png')} /></IconButton>
+        <IconButton><IconImg source={require('../../assets/icons/add.png')} /></IconButton>
+        <Spacer />
+        <IconButton><IconImg source={require('../../assets/icons/Gear.png')} /></IconButton>
+        <IconButton onPress={handleLogout}><IconImg source={require('../../assets/icons/SignOut.png')} /></IconButton>
+      </TopBar>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Profile Header */}
-        <View style={styles.header}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{getInitials()}</Text>
-          </View>
-          <Text style={styles.name}>{user?.displayName || 'User'}</Text>
-          <Text style={styles.bio}>Crafting beautiful spaces with modern minimalism</Text>
-        </View>
+      <ScrollArea showsVerticalScrollIndicator={false}>
+        <Header>
+          <Avatar><AvatarText>{getInitials()}</AvatarText></Avatar>
+          <Name>{user?.displayName || 'User'}</Name>
+          <Bio>Crafting beautiful spaces with modern minimalism</Bio>
+        </Header>
 
-        {/* Stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.stat}>
-            <Text style={styles.statNumber}>3</Text>
-            <Text style={styles.statLabel}>History</Text>
-          </View>
-          <View style={styles.stat}>
-            <Text style={styles.statNumber}>9</Text>
-            <Text style={styles.statLabel}>Likes</Text>
-          </View>
-          <View style={styles.stat}>
-            <Text style={styles.statNumber}>6</Text>
-            <Text style={styles.statLabel}>Saved</Text>
-          </View>
-          <View style={styles.stat}>
-            <Text style={styles.statNumber}>42</Text>
-            <Text style={styles.statLabel}>Following</Text>
-          </View>
-          <View style={styles.stat}>
-            <Text style={styles.statNumber}>15</Text>
-            <Text style={styles.statLabel}>Posts</Text>
-          </View>
-        </View>
-
-        {/* Style Preferences */}
-        <View style={styles.preferencesSection}>
-          <Text style={styles.preferencesTitle}>My Style Preferences</Text>
-          <View style={styles.preferencesContainer}>
-            {STYLE_PREFERENCES.map((style, index) => (
-              <View
-                key={style}
-                style={[
-                  styles.preferenceTag,
-                  index === 0 && styles.preferenceTagCoral,
-                  index === 1 && styles.preferenceTagPink,
-                  index === 2 && styles.preferenceTagBeige,
-                  index === 3 && styles.preferenceTagBrown,
-                ]}
-              >
-                <Text style={styles.preferenceText}>{style}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Tabs */}
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity
-            style={[styles.tab, selectedTab === 'All History' && styles.tabActive]}
-            onPress={() => setSelectedTab('All History')}
-          >
-            <Text style={[styles.tabText, selectedTab === 'All History' && styles.tabTextActive]}>
-              All History
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, selectedTab === 'Saved History' && styles.tabActive]}
-            onPress={() => setSelectedTab('Saved History')}
-          >
-            <Text style={[styles.tabText, selectedTab === 'Saved History' && styles.tabTextActive]}>
-              Saved History
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, selectedTab === 'Liked History' && styles.tabActive]}
-            onPress={() => setSelectedTab('Liked History')}
-          >
-            <Text style={[styles.tabText, selectedTab === 'Liked History' && styles.tabTextActive]}>
-              Liked History
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Image Grid */}
-        <View style={styles.grid}>
-          {HISTORY_IMAGES.map((item) => (
-            <TouchableOpacity key={item.id} style={styles.gridItem}>
-              <Image source={{ uri: item.image }} style={styles.gridImage} />
-              {item.liked && (
-                <View style={styles.likeIcon}>
-                  <Text style={styles.likeIconText}>❤️</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+        <StatsRow>
+          {[
+            { label: 'History', value: 3 },
+            { label: 'Likes', value: 9 },
+            { label: 'Saved', value: 6 },
+            { label: 'Following', value: 42 },
+            { label: 'Posts', value: 15 },
+          ].map((item) => (
+            <Stat key={item.label}>
+              <StatNum>{item.value}</StatNum>
+              <StatLabel>{item.label}</StatLabel>
+            </Stat>
           ))}
-        </View>
+        </StatsRow>
 
-        <View style={{ height: 100 }} />
-      </ScrollView>
-    </View>
+        {/* Style Preferences with original colors */}
+        <PrefSection>
+          <PrefTitle>My Style Preferences</PrefTitle>
+          <PrefWrap>
+            {STYLE_PREFERENCES.map((style, idx) => (
+              <PrefChip key={style} $bg={PREF_COLORS[idx % PREF_COLORS.length]}>
+                <PrefText>{style}</PrefText>
+              </PrefChip>
+            ))}
+          </PrefWrap>
+        </PrefSection>
+
+        <TabsWrap>
+          {['All History', 'Saved History', 'Liked History'].map(tab => (
+            <Tab key={tab} $active={selectedTab === tab} onPress={() => setSelectedTab(tab)}>
+              <TabText $active={selectedTab === tab}>{tab}</TabText>
+            </Tab>
+          ))}
+        </TabsWrap>
+
+        <Grid>
+          {[
+            { id: 1, image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=300', liked: true },
+            { id: 2, image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=300', liked: false },
+            { id: 3, image: 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=300', liked: true },
+            { id: 4, image: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=300', liked: false },
+          ].map((item) => (
+            <CardShadow key={item.id}>
+              <Card>
+                <CardImg source={{ uri: item.image }} />
+                {item.liked && (
+                  <HeartFab activeOpacity={0.8} onPress={() => { /* TODO: toggle like */ }}>
+                    <HeartIcon source={require('../../assets/icons/filledheart-white.png')} />
+                  </HeartFab>
+                )}
+              </Card>
+            </CardShadow>
+          ))}
+        </Grid>
+
+        <BottomSpace />
+      </ScrollArea>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#EDE8DC',
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingTop: 50,
-    paddingBottom: 15,
-    gap: 10,
-  },
-  topIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: '#D4C5B0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  iconText: {
-    fontSize: 18,
-  },
-  header: {
-    alignItems: 'center',
-    paddingTop: 20,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#4A90E2',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  avatarText: {
-    color: '#fff',
-    fontSize: 36,
-    fontWeight: 'bold',
-  },
-  name: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#1a1a1a',
-  },
-  bio: {
-    fontSize: 13,
-    color: '#666',
-    textAlign: 'center',
-    paddingHorizontal: 40,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-  },
-  stat: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-  },
-  statLabel: {
-    fontSize: 11,
-    color: '#666',
-    marginTop: 2,
-  },
-  preferencesSection: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  preferencesTitle: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
-  },
-  preferencesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  preferenceTag: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 15,
-  },
-  preferenceTagCoral: {
-    backgroundColor: '#F4A8A0',
-  },
-  preferenceTagPink: {
-    backgroundColor: '#F5D5D5',
-  },
-  preferenceTagBeige: {
-    backgroundColor: '#E8DCC8',
-  },
-  preferenceTagBrown: {
-    backgroundColor: '#D4B59E',
-  },
-  preferenceText: {
-    fontSize: 13,
-    color: '#1a1a1a',
-    fontWeight: '500',
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    gap: 8,
-    marginBottom: 15,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: 'rgba(212, 197, 176, 0.5)',
-    alignItems: 'center',
-  },
-  tabActive: {
-    backgroundColor: '#D4C5B0',
-  },
-  tabText: {
-    fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
-  },
-  tabTextActive: {
-    color: '#1a1a1a',
-    fontWeight: '600',
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 15,
-    gap: 10,
-  },
-  gridItem: {
-    width: '48%',
-    aspectRatio: 1,
-    borderRadius: 15,
-    overflow: 'hidden',
-    backgroundColor: '#fff',
-  },
-  gridImage: {
-    width: '100%',
-    height: '100%',
-  },
-  likeIcon: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-  },
-  likeIconText: {
-    fontSize: 16,
-  },
-});
+/* styled components */
+const Screen = styled(SafeAreaView)`
+  flex: 1;
+  background-color: ${COLOR.bg};
+`;
+
+const ScrollArea = styled.ScrollView`
+  flex: 1;
+`;
+
+const TopBar = styled.View`
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 15px 15px 15px;
+  gap: 10px;
+`;
+
+const IconButton = styled.TouchableOpacity`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: #ffffffcc;  /* light translucent white */
+  justify-content: center;
+  align-items: center;
+
+  shadow-color: #000;
+  shadow-opacity: 0.1;
+  shadow-radius: 4px;
+  shadow-offset: 0px 1px;
+  elevation: 2;
+`;
+
+const IconImg = styled.Image`
+  width: 20px;
+  height: 20px;
+  resize-mode: contain;
+`;
+
+const Spacer = styled.View`
+  flex: 1;
+`;
+
+const Header = styled.View`
+  align-items: center;
+  padding-top: 20px;
+`;
+
+const Avatar = styled.View`
+  width: 100px;
+  height: 100px;
+  border-radius: 50px;
+  background-color: #111827;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 15px;
+`;
+
+const AvatarText = styled.Text`
+  color: #EDE8DC;
+  font-size: 36px;
+  font-weight: 700;
+`;
+
+const Name = styled.Text`
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: ${COLOR.text};
+`;
+
+const Bio = styled.Text`
+  font-size: 13px;
+  color: ${COLOR.subtext};
+  text-align: center;
+  padding: 0 40px;
+`;
+
+const StatsRow = styled.View`
+  flex-direction: row;
+  justify-content: space-around;
+  padding: 20px;
+`;
+
+const Stat = styled.View`
+  align-items: center;
+`;
+
+const StatNum = styled.Text`
+  font-size: 20px;
+  font-weight: bold;
+  color: ${COLOR.text};
+`;
+
+const StatLabel = styled.Text`
+  font-size: 11px;
+  color: ${COLOR.subtext};
+  margin-top: 2px;
+`;
+
+const PrefSection = styled.View`
+  padding: 0 20px 20px 20px;
+`;
+
+const PrefTitle = styled.Text`
+  font-size: 14px;
+  color: ${COLOR.subtext};
+  margin-bottom: 12px;
+`;
+
+const PrefWrap = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+const PrefChip = styled.View<{ $bg: string }>`
+  padding: 8px 16px;
+  border-radius: 15px;
+  background-color: ${({ $bg }) => $bg};
+`;
+
+const PrefText = styled.Text`
+  font-size: 13px;
+  color: #1a1a1a;
+  font-weight: 500;
+`;
+
+const TabsWrap = styled.View`
+  flex-direction: row;
+  padding: 0 20px;
+  gap: 8px;
+  margin-bottom: 15px;
+`;
+
+const Tab = styled.TouchableOpacity<{ $active: boolean }>`
+  flex: 1;
+  padding-vertical: 10px;
+  border-radius: 10px;
+  background-color: ${({ $active }) =>
+    $active ? '#111827' : 'rgba(17,24,39,0.1)'};
+  align-items: center;
+  border: 1px solid #111827;
+`;
+
+const TabText = styled.Text<{ $active: boolean }>`
+  font-size: 13px;
+  font-weight: 600;
+  color: ${({ $active }) => ($active ? '#EDE8DC' : '#111827')};
+`;
+
+const Grid = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;     
+  column-gap: 10px;            
+  row-gap: 10px;
+  padding-horizontal: 10px;    
+`;
+
+const CardShadow = styled.View`
+  border-radius: 15px;
+  background-color: ${COLOR.cardBg};
+
+  shadow-color: ${COLOR.shadow};
+  shadow-opacity: 0.15;
+  shadow-radius: 8px;
+  shadow-offset: 0px 3px;
+  elevation: 4;
+`;
+
+const Card = styled.TouchableOpacity`
+  border-radius: 15px;
+  overflow: hidden;
+  background-color: ${COLOR.cardBg};
+  position: relative;
+  width: ${COL_W}px;
+  aspect-ratio: 1;
+`;
+
+const CardImg = styled.Image`
+  width: 100%;
+  height: 100%;
+  background-color: #f2f2f2;
+`;
+
+const LikeBadge = styled.View`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background-color: rgba(255, 255, 255, 0.8);
+  justify-content: center;
+  align-items: center;
+
+  shadow-color: #000;
+  shadow-opacity: 0.2;
+  shadow-radius: 3px;
+  shadow-offset: 0px 1px;
+  elevation: 3;
+`;
+
+const HeartFab = styled.TouchableOpacity`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 6px;             
+`;
+
+const HeartIcon = styled.Image`
+  width: 22px;
+  height: 22px;
+  resize-mode: contain;
+  opacity: 0.8;            /* tweak 0.5-1.0*/
+`;
+
+const BottomSpace = styled.View`
+  height: 100px;
+`;
