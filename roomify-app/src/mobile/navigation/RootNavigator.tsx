@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import AuthNavigator from './AuthNavigator';
 import TabNavigator from './TabNavigator';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function RootNavigator() {
   const { user, loading } = useAuth();

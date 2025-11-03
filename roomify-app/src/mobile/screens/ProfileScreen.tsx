@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components/native';
 import { Alert, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 const COLOR = {
   bg: '#EDE8DC',        // same creamy background
@@ -65,12 +65,12 @@ export default function ProfileScreen() {
   return (
     <Screen edges={['top']}>
       <TopBar>
-        <IconButton><IconImg source={require('../../assets/icons/search.png')} /></IconButton>
-        <IconButton><IconImg source={require('../../assets/icons/Bell.png')} /></IconButton>
-        <IconButton><IconImg source={require('../../assets/icons/add.png')} /></IconButton>
+        <IconButton><IconImg source={require('../../../assets/icons/search.png')} /></IconButton>
+        <IconButton><IconImg source={require('../../../assets/icons/Bell.png')} /></IconButton>
+        <IconButton><IconImg source={require('../../../assets/icons/add.png')} /></IconButton>
         <Spacer />
-        <IconButton><IconImg source={require('../../assets/icons/Gear.png')} /></IconButton>
-        <IconButton onPress={handleLogout}><IconImg source={require('../../assets/icons/SignOut.png')} /></IconButton>
+        <IconButton><IconImg source={require('../../../assets/icons/Gear.png')} /></IconButton>
+        <IconButton onPress={handleLogout}><IconImg source={require('../../../assets/icons/SignOut.png')} /></IconButton>
       </TopBar>
 
       <ScrollArea showsVerticalScrollIndicator={false}>
@@ -127,7 +127,7 @@ export default function ProfileScreen() {
                 <CardImg source={{ uri: item.image }} />
                 {item.liked && (
                   <HeartFab activeOpacity={0.8} onPress={() => { /* TODO: toggle like */ }}>
-                    <HeartIcon source={require('../../assets/icons/filledheart-white.png')} />
+                    <HeartIcon source={require('../../../assets/icons/filledheart-white.png')} />
                   </HeartFab>
                 )}
               </Card>
@@ -259,7 +259,7 @@ const PrefWrap = styled.View`
 const PrefChip = styled.View<{ $bg: string }>`
   padding: 8px 16px;
   border-radius: 15px;
-  background-color: ${({ $bg }) => $bg};
+  background-color: ${({ $bg }: { $bg: string }) => $bg};
 `;
 
 const PrefText = styled.Text`
@@ -279,8 +279,8 @@ const Tab = styled.TouchableOpacity<{ $active: boolean }>`
   flex: 1;
   padding-vertical: 10px;
   border-radius: 10px;
-  background-color: ${({ $active }) =>
-    $active ? '#111827' : 'rgba(17,24,39,0.1)'};
+  background-color: ${(props: { $active: boolean }) =>
+    props.$active ? '#111827' : 'rgba(17,24,39,0.1)'};
   align-items: center;
   border: 1px solid #111827;
 `;
@@ -288,7 +288,7 @@ const Tab = styled.TouchableOpacity<{ $active: boolean }>`
 const TabText = styled.Text<{ $active: boolean }>`
   font-size: 13px;
   font-weight: 600;
-  color: ${({ $active }) => ($active ? '#EDE8DC' : '#111827')};
+  color: ${(props: { $active: boolean }) => (props.$active ? '#EDE8DC' : '#111827')};
 `;
 
 const Grid = styled.View`

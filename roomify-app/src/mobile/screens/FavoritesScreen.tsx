@@ -90,7 +90,7 @@ export default function FavoritesScreen() {
         {/* favorites grid */}
         {isEmpty ? (
           <EmptyWrap>
-            <HeartBig source={require('../../assets/icons/filledheart-white.png')} />
+            <HeartBig source={require('../../../assets/icons/filledheart-white.png')} />
             <EmptyTitle>No favorites yet</EmptyTitle>
             <EmptySub>Tap the heart on any idea to save it here.</EmptySub>
           </EmptyWrap>
@@ -110,7 +110,7 @@ export default function FavoritesScreen() {
                       <CardClip activeOpacity={0.85}>
                         <Img source={{ uri: item.uri }} style={{ height: item.h, width: COL_W }} />
                         <HeartFab activeOpacity={0.8} onPress={() => { /* TODO: unfavorite */ }}>
-                          <HeartIcon source={require('../../assets/icons/filledheart-white.png')} />
+                          <HeartIcon source={require('../../../assets/icons/filledheart-white.png')} />
                         </HeartFab>
                       </CardClip>
                     </CardShadow>
@@ -123,7 +123,7 @@ export default function FavoritesScreen() {
                       <CardClip activeOpacity={0.85}>
                         <Img source={{ uri: item.uri }} style={{ height: item.h, width: COL_W }} />
                         <HeartFab activeOpacity={0.8} onPress={() => { /* TODO: unfavorite */ }}>
-                          <HeartIcon source={require('../../assets/icons/filledheart-white.png')} />
+                          <HeartIcon source={require('../../../assets/icons/filledheart-white.png')} />
                         </HeartFab>
                       </CardClip>
                     </CardShadow>

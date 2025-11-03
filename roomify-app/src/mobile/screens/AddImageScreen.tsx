@@ -28,6 +28,8 @@ const COLOR = {
   btnSecondary: '#EDE8DC',
   btnPrimaryText: '#EDE8DC',
   btnSecondaryText: '#111827',
+
+  title: '#111111',
 };
 
 const shadow = css`
@@ -251,7 +253,7 @@ const Chip = styled.TouchableOpacity.attrs({
 })<{ $selected: boolean }>`
   padding: 10px 18px;
   border-radius: 20px;
-  background-color: ${({ $selected }) => ($selected ? COLOR.chipSelectedBg : COLOR.chipBg)};
+  background-color: ${({ $selected }: { $selected: boolean }) => ($selected ? COLOR.chipSelectedBg : COLOR.chipBg)};
   ${Platform.select({
     ios: {
       shadowColor: '#000',
@@ -265,8 +267,8 @@ const Chip = styled.TouchableOpacity.attrs({
 
 const ChipText = styled.Text<{ $selected: boolean }>`
   font-size: 15px;
-  color: ${({ $selected }) => ($selected ? COLOR.chipTextSelected : COLOR.chipText)};
-  font-weight: ${({ $selected }) => ($selected ? 700 : 600)};
+  color: ${({ $selected }: { $selected: boolean }) => $selected ? COLOR.chipTextSelected : COLOR.chipText};
+  font-weight: ${({ $selected }: { $selected: boolean }) => $selected ? 700 : 600};
   letter-spacing: 0.2px;
 `;
 
