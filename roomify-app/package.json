@@ -1,0 +1,53 @@
+{
+  "name": "roomify-app",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~6.1.2",
+    "@radix-ui/react-accordion": "^1.2.12",
+    "@radix-ui/react-alert-dialog": "^1.1.15",
+    "@radix-ui/react-aspect-ratio": "^1.1.7",
+    "@radix-ui/react-avatar": "^1.1.10",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-google-signin/google-signin": "^16.0.0",
+    "@react-navigation/bottom-tabs": "^7.4.9",
+    "@react-navigation/native": "^7.1.18",
+    "@react-navigation/native-stack": "^7.3.28",
+    "class-variance-authority": "^0.7.1",
+    "embla-carousel-react": "^8.6.0",
+    "expo": "~54.0.17",
+    "expo-image": "~3.0.10",
+    "expo-status-bar": "~3.0.8",
+    "firebase": "^12.4.0",
+    "framer-motion": "^12.23.24",
+    "lucide-react": "^0.552.0",
+    "react": "19.1.0",
+    "react-day-picker": "^9.11.1",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "react-native-svg": "15.12.1",
+    "react-native-web": "^0.21.0",
+    "recharts": "^3.3.0",
+    "styled-components": "^6.1.19"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.16",
+    "@types/react": "~19.1.0",
+    "@types/styled-components-react-native": "^5.2.5",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "react-native-svg-transformer": "^1.5.1",
+    "tailwindcss": "^4.1.16",
+    "typescript": "~5.9.2"
+  },
+  "private": true
+}
