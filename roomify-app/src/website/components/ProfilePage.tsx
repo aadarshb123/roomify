@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Settings, Heart, Bookmark, Clock, Award, TrendingUp, Edit, } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Settings, Heart, Bookmark, Clock, Award, TrendingUp, Edit, X, Save } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { updateProfile } from "firebase/auth";
 
 // 🧩 Dummy user & interior photos (Unsplash)
 const profilePic =
@@ -52,7 +54,29 @@ const myDesigns = [
 ];
 
 export function ProfilePage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("designs");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editName, setEditName] = useState(user?.displayName || "");
+  const [editBio, setEditBio] = useState("Passionate interior designer with over 10 years of experience");
+  const [saving, setSaving] = useState(false);
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    
+    setSaving(true);
+    try {
+      await updateProfile(user, {
+        displayName: editName,
+      });
+      alert('Profile updated successfully!');
+      setIsEditModalOpen(false);
+    } catch (error: any) {
+      alert('Error updating profile: ' + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const tabs = [
     { id: "designs", label: "My Designs", icon: Clock, count: 24 },
@@ -87,8 +111,8 @@ export function ProfilePage() {
               </motion.div>
 
               <div>
-                <h1 className="text-4xl mb-2 font-semibold">Akira Tanaka</h1>
-                <p className="text-white/90 mb-4">Pro Interior Designer</p>
+                <h1 className="text-4xl mb-2 font-semibold">{user?.displayName || user?.email || 'Guest'}</h1>
+                <p className="text-white/90 mb-4">Interior Designer</p>
                 <div className="flex items-center gap-4 flex-wrap">
                   <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg">
                     <Award className="w-4 h-4" />
@@ -105,6 +129,7 @@ export function ProfilePage() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => setIsEditModalOpen(true)}
               className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-6 py-3 rounded-xl border border-white/30"
             >
               <Settings className="w-5 h-5" />
@@ -244,6 +269,107 @@ export function ProfilePage() {
             </motion.div>
           ))}
         </motion.div>
+
+        {/* ===== Edit Profile Modal ===== */}
+        <AnimatePresence>
+          {isEditModalOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsEditModalOpen(false)}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white rounded-3xl p-8 shadow-2xl z-50"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-3xl font-semibold">Edit Profile</h2>
+                  <motion.button
+                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="w-10 h-10 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </motion.button>
+                </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-black/70 mb-2">
+                      Display Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-black/10 focus:border-[#c97b63] outline-none transition-colors"
+                      placeholder="Your name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-black/70 mb-2">
+                      Bio
+                    </label>
+                    <textarea
+                      value={editBio}
+                      onChange={(e) => setEditBio(e.target.value)}
+                      rows={4}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-black/10 focus:border-[#c97b63] outline-none transition-colors resize-none"
+                      placeholder="Tell us about yourself..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-black/70 mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={user?.email || ''}
+                      disabled
+                      className="w-full px-4 py-3 rounded-xl border-2 border-black/10 bg-black/5 text-black/50 cursor-not-allowed"
+                    />
+                    <p className="text-xs text-black/50 mt-1">Email cannot be changed</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-8">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleSaveProfile}
+                    disabled={saving}
+                    className="flex-1 flex items-center justify-center gap-2 bg-[#c97b63] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#b86b53] transition-colors disabled:opacity-50"
+                  >
+                    {saving ? (
+                      'Saving...'
+                    ) : (
+                      <>
+                        <Save className="w-5 h-5" />
+                        <span>Save Changes</span>
+                      </>
+                    )}
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="px-6 py-3 rounded-xl font-medium border-2 border-black/10 hover:bg-black/5 transition-colors"
+                  >
+                    Cancel
+                  </motion.button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
