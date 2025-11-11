@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { Home, Sparkles, Search, User } from "lucide-react";
+import { Home, Sparkles, Search, User, LogOut } from "lucide-react";
 import logoR from "../../../assets/logo-r.png";
+import { useAuth } from "../../context/AuthContext";
 
 interface NavigationProps {
   currentSection: string;
@@ -12,6 +13,18 @@ const dummyProfileImg =
   "https://wallpapers.com/images/high/matching-anime-profile-pictures-923-x-948-o86k3jsdjhgtdvp5.webp";
 
 export function Navigation({ currentSection, setCurrentSection }: NavigationProps) {
+  const { user, logout } = useAuth();
+  
+  const handleLogout = async () => {
+    if (window.confirm('Are you sure you want to logout?')) {
+      try {
+        await logout();
+      } catch (error: any) {
+        alert('Logout failed: ' + error.message);
+      }
+    }
+  };
+
   const navItems = [
     { id: "home", label: "Home", icon: Home },
     { id: "ai-studio", label: "AI Studio", icon: Sparkles },
@@ -67,20 +80,33 @@ export function Navigation({ currentSection, setCurrentSection }: NavigationProp
           </div>
 
           {/* ===== User Profile Section ===== */}
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="flex items-center gap-3 cursor-pointer bg-white/50 px-4 py-2 rounded-full"
-          >
-            <img
-              src={dummyProfileImg}
-              alt="Profile"
-              className="w-8 h-8 rounded-full object-cover border-2 border-[#c97b63]"
-            />
-            <div className="text-left">
-              <p className="text-sm font-medium">Akira Tanaka</p>
-              <p className="text-xs text-black/60">Pro Designer</p>
-            </div>
-          </motion.div>
+          <div className="flex items-center gap-3">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="flex items-center gap-3 cursor-pointer bg-white/50 px-4 py-2 rounded-full"
+            >
+              <img
+                src={dummyProfileImg}
+                alt="Profile"
+                className="w-8 h-8 rounded-full object-cover border-2 border-[#c97b63]"
+              />
+              <div className="text-left">
+                <p className="text-sm font-medium">{user?.displayName || user?.email || 'Guest'}</p>
+                <p className="text-xs text-black/60">Pro Designer</p>
+              </div>
+            </motion.div>
+            
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-white/50 hover:bg-red-50 px-4 py-2 rounded-full transition-colors"
+              title="Logout"
+            >
+              <LogOut className="w-4 h-4 text-red-600" />
+              <span className="text-sm text-red-600">Logout</span>
+            </motion.button>
+          </div>
         </div>
       </div>
     </motion.nav>
