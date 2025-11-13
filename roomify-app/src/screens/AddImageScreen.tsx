@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Image, ActivityIndicator, Alert } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { storage, db } from '../config/firebase';
+import { useAuth } from '../context/AuthContext';
+
 
 const ROOM_TYPES = ['Bedroom', 'Living Room', 'Kitchen', 'Office', 'Bathroom', 'Décor'];
 const ROOM_STYLES = ['Modern', 'Minimalist', 'Coastal', 'Scandinavian', 'Art Deco'];
@@ -8,6 +14,10 @@ export default function AddImageScreen() {
   const [selectedRoomTypes, setSelectedRoomTypes] = useState<string[]>([]);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [description, setDescription] = useState('');
+  const [localImageUri, setLocalImageUri] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const { user } = useAuth();
+  const [image, setImage] = useState<string | null>(null);
 
   const toggleRoomType = (type: string) => {
     if (selectedRoomTypes.includes(type)) {
@@ -25,16 +35,88 @@ export default function AddImageScreen() {
     }
   };
 
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Please grant permission to access your photos.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.9,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setLocalImageUri(result.assets[0].uri);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!user) {
+      Alert.alert('Please log in', 'You need to be logged in to upload.');
+      return;
+    }
+    if (!localImageUri) {
+      Alert.alert('No image selected', 'Please pick an image before uploading.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Upload image to Firebase Storage
+      const response = await fetch(localImageUri);
+      const blob = await response.blob();
+      const fileName = `uploads/${user.uid}_${Date.now()}.jpg`;
+      const storageRef = ref(storage, fileName);
+
+      await uploadBytes(storageRef, blob);
+      const imageUrl = await getDownloadURL(storageRef);
+
+      // Create Firestore document
+      await addDoc(collection(db, 'uploads'), {
+        userId: user.uid,
+        imageUrl,
+        roomTypes: selectedRoomTypes,
+        styles: selectedStyles,
+        description,
+        status: 'pending',
+        createdAt: serverTimestamp(),
+      });
+
+      Alert.alert('Success', 'Your room image has been uploaded!');
+      // Reset form
+      setLocalImageUri(null);
+      setSelectedRoomTypes([]);
+      setSelectedStyles([]);
+      setDescription('');
+    } catch (error) {
+      console.error('Upload failed:', error);
+      Alert.alert('Upload Failed', 'Something went wrong. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Upload Your Room</Text>
 
       {/* Upload Area */}
-      <TouchableOpacity style={styles.uploadArea}>
-        <View style={styles.uploadIcon}>
-          <Text style={styles.uploadIconText}>+</Text>
-        </View>
-        <Text style={styles.uploadText}>Upload Image</Text>
+      <TouchableOpacity style={styles.uploadArea} onPress={pickImage}>
+        {localImageUri ? (
+          <Image
+            source={{ uri: localImageUri }}
+            style={{ width: '100%', height: '100%', borderRadius: 20 }}
+          />
+        ) : (
+          <>
+            <View style={styles.uploadIcon}>
+              <Text style={styles.uploadIconText}>+</Text>
+            </View>
+            <Text style={styles.uploadText}>Upload Image</Text>
+          </>
+        )}
       </TouchableOpacity>
 
       {/* Room Type Section */}
@@ -43,16 +125,10 @@ export default function AddImageScreen() {
         {ROOM_TYPES.map((type) => (
           <TouchableOpacity
             key={type}
-            style={[
-              styles.chip,
-              selectedRoomTypes.includes(type) && styles.chipSelected
-            ]}
+            style={[styles.chip, selectedRoomTypes.includes(type) && styles.chipSelected]}
             onPress={() => toggleRoomType(type)}
           >
-            <Text style={[
-              styles.chipText,
-              selectedRoomTypes.includes(type) && styles.chipTextSelected
-            ]}>
+            <Text style={[styles.chipText, selectedRoomTypes.includes(type) && styles.chipTextSelected]}>
               {type}
             </Text>
           </TouchableOpacity>
@@ -68,16 +144,10 @@ export default function AddImageScreen() {
         {ROOM_STYLES.map((style) => (
           <TouchableOpacity
             key={style}
-            style={[
-              styles.chip,
-              selectedStyles.includes(style) && styles.chipSelected
-            ]}
+            style={[styles.chip, selectedStyles.includes(style) && styles.chipSelected]}
             onPress={() => toggleStyle(style)}
           >
-            <Text style={[
-              styles.chipText,
-              selectedStyles.includes(style) && styles.chipTextSelected
-            ]}>
+            <Text style={[styles.chipText, selectedStyles.includes(style) && styles.chipTextSelected]}>
               {style}
             </Text>
           </TouchableOpacity>
@@ -95,11 +165,20 @@ export default function AddImageScreen() {
         onChangeText={setDescription}
       />
 
-      {/* Action Buttons */}
-      <TouchableOpacity style={styles.saveButton}>
-        <Text style={styles.saveButtonText}>Save to My Pins</Text>
+      {/* Save Button */}
+      <TouchableOpacity
+        style={[styles.saveButton, uploading && { opacity: 0.6 }]}
+        onPress={handleUpload}
+        disabled={uploading}
+      >
+        {uploading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.saveButtonText}>Save to My Pins</Text>
+        )}
       </TouchableOpacity>
 
+      {/* Share Button */}
       <TouchableOpacity style={styles.shareButton}>
         <Text style={styles.shareButtonText}>Share to Explore Feed</Text>
       </TouchableOpacity>
@@ -131,6 +210,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 30,
     backgroundColor: 'transparent',
+    overflow: 'hidden',
   },
   uploadIcon: {
     width: 60,
