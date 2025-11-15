@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import styled, { css } from 'styled-components/native';
 import { Platform } from 'react-native';
 
+import * as ImagePicker from 'expo-image-picker';
+import { Alert, Image } from 'react-native';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { storage, db } from '../../config/firebase';
+import { useAuth } from '../../context/AuthContext';
+
 const ROOM_TYPES = ['Bedroom', 'Living Room', 'Kitchen', 'Office', 'Bathroom', 'Décor'];
 const ROOM_STYLES = ['Modern', 'Minimalist', 'Coastal', 'Scandinavian', 'Art Deco'];
 
@@ -51,6 +58,10 @@ export default function AddImageScreen() {
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [description, setDescription] = useState('');
 
+  const [localImageUri, setLocalImageUri] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const { user } = useAuth();
+
   const toggleRoomType = (type: string) => {
     setSelectedRoomTypes((prev) =>
       prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
@@ -63,6 +74,65 @@ export default function AddImageScreen() {
     );
   };
 
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission denied', 'Please allow photo library access.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.9,
+    });
+
+    if (!result.canceled && result.assets?.length) {
+      setLocalImageUri(result.assets[0].uri);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!user) {
+      Alert.alert('Please log in', 'You must be logged in to upload.');
+      return;
+    }
+    if (!localImageUri) {
+      Alert.alert('No image selected', 'Tap the upload area to choose an image.');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const resp = await fetch(localImageUri);
+      const blob = await resp.blob();
+      const fileRef = ref(storage, `uploads/${user.uid}_${Date.now()}.jpg`);
+      await uploadBytes(fileRef, blob);
+      const downloadURL = await getDownloadURL(fileRef);
+
+      await addDoc(collection(db, 'uploads'), {
+        userId: user.uid,
+        imageUrl: downloadURL,
+        roomTypes: selectedRoomTypes,
+        styles: selectedStyles,
+        description,
+        status: 'pending',
+        createdAt: serverTimestamp(),
+      });
+
+      Alert.alert('Success', 'Your room image has been uploaded!');
+      setLocalImageUri(null);
+      setSelectedRoomTypes([]);
+      setSelectedStyles([]);
+      setDescription('');
+    } catch (e: any) {
+      console.error(e);
+      Alert.alert('Upload failed', e?.message || 'Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <Screen
       contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 60, paddingBottom: 48 }}
@@ -72,13 +142,21 @@ export default function AddImageScreen() {
       <Title>Upload Your Room</Title>
 
       {/* Upload Area */}
-      <UploadArea activeOpacity={0.85} onPress={() => {}}>
-        <UploadIcon>
-          <UploadIconText>+</UploadIconText>
-        </UploadIcon>
-        <UploadText>Upload Image</UploadText>
-        <UploadHint>JPG / PNG up to 10MB</UploadHint>
+      <UploadArea onPress={pickImage}>
+        {localImageUri ? (
+          <Image
+            source={{ uri: localImageUri }}
+            style={{ width: '100%', height: '100%', borderRadius: 20 }}
+            resizeMode="cover"
+          />
+        ) : (
+          <>
+            <UploadIcon><UploadIconText>+</UploadIconText></UploadIcon>
+            <UploadIconText>Upload Image</UploadIconText>
+          </>
+        )}
       </UploadArea>
+
 
       {/* Room Type */}
       <Section>
@@ -127,8 +205,8 @@ export default function AddImageScreen() {
       </Section>
 
       {/* Actions */}
-      <PrimaryButton activeOpacity={0.9}>
-        <PrimaryButtonText>Save to My Pins</PrimaryButtonText>
+      <PrimaryButton onPress={handleUpload} disabled={uploading}>
+        <PrimaryButtonText>{uploading ? 'Uploading…' : 'Save to My Pins'}</PrimaryButtonText>
       </PrimaryButton>
 
       <SecondaryButton activeOpacity={0.9}>
