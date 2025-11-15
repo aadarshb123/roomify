@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
-import { Home, Sparkles, Search, User, LogOut } from "lucide-react";
-import logoR from "../../../assets/logo-r.png";
+import { Home, Upload as UploadIcon, Search, User, LogOut, Images } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
 interface NavigationProps {
@@ -8,27 +7,26 @@ interface NavigationProps {
   setCurrentSection: (section: string) => void;
 }
 
-// 🧩 Dummy profile image (replace later with user profile)
 const dummyProfileImg =
   "https://wallpapers.com/images/high/matching-anime-profile-pictures-923-x-948-o86k3jsdjhgtdvp5.webp";
 
 export function Navigation({ currentSection, setCurrentSection }: NavigationProps) {
   const { user, logout } = useAuth();
-  
+
   const handleLogout = async () => {
-    if (window.confirm('Are you sure you want to logout?')) {
+    if (window.confirm("Are you sure you want to logout?")) {
       try {
         await logout();
       } catch (error: any) {
-        alert('Logout failed: ' + error.message);
+        alert("Logout failed: " + error.message);
       }
     }
   };
 
   const navItems = [
     { id: "home", label: "Home", icon: Home },
-    { id: "ai-studio", label: "AI Studio", icon: Sparkles },
-    { id: "search", label: "Search", icon: Search },
+    { id: "explore", label: "Explore", icon: Images },
+    { id: "upload", label: "Upload", icon: UploadIcon },
     { id: "profile", label: "Profile", icon: User },
   ];
 
@@ -40,13 +38,15 @@ export function Navigation({ currentSection, setCurrentSection }: NavigationProp
     >
       <div className="mx-auto px-8 py-4">
         <div className="flex items-center justify-between">
-          {/* ===== Logo ===== */}
+
+          {/* Logo */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             className="flex items-center gap-3 cursor-pointer"
+            onClick={() => setCurrentSection("home")}
           >
             <div className="w-12 h-12 rounded-full bg-linear-to-br from-[#c97b63] to-[#d4956f] flex items-center justify-center shadow-lg">
-              <Sparkles className="w-6 h-6 text-white" />
+              <Search className="w-6 h-6 text-white" />
             </div>
             <div>
               <h1 className="font-semibold tracking-tight">Roomify</h1>
@@ -54,7 +54,7 @@ export function Navigation({ currentSection, setCurrentSection }: NavigationProp
             </div>
           </motion.div>
 
-          {/* ===== Nav Tabs ===== */}
+          {/* Tabs */}
           <div className="flex items-center gap-4">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -79,7 +79,7 @@ export function Navigation({ currentSection, setCurrentSection }: NavigationProp
             })}
           </div>
 
-          {/* ===== User Profile Section ===== */}
+          {/* User */}
           <div className="flex items-center gap-3">
             <motion.div
               whileHover={{ scale: 1.05 }}
@@ -91,11 +91,13 @@ export function Navigation({ currentSection, setCurrentSection }: NavigationProp
                 className="w-8 h-8 rounded-full object-cover border-2 border-[#c97b63]"
               />
               <div className="text-left">
-                <p className="text-sm font-medium">{user?.displayName || user?.email || 'Guest'}</p>
-                <p className="text-xs text-black/60">Pro Designer</p>
+                <p className="text-sm font-medium">
+                  {user?.displayName || user?.email || "Guest"}
+                </p>
+                <p className="text-xs text-black/60">Member</p>
               </div>
             </motion.div>
-            
+
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
