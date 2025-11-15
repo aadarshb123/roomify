@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components/native';
-import { Alert, Dimensions } from 'react-native';
+import { Alert, Dimensions, Platform, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
+import { Room, getUserCreatedRooms, getUserLikedRooms, getFollowingCount, getFollowerCount, getUser } from '../services/api';
 
 const COLOR = {
   bg: '#EDE8DC',        // same creamy background
@@ -32,23 +34,150 @@ const PREF_COLORS: string[] = [
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
-  const [selectedTab, setSelectedTab] = useState('All History');
+  const navigation = useNavigation();
+  const [selectedTab, setSelectedTab] = useState('Created');
+  const [createdRooms, setCreatedRooms] = useState<Room[]>([]);
+  const [likedRooms, setLikedRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [userBio, setUserBio] = useState<string>('');
+  const [stylePreferences, setStylePreferences] = useState<string[]>([]);
+
+  // Fetch rooms based on selected tab
+  useEffect(() => {
+    const loadRooms = async () => {
+      if (!user) {
+        setCreatedRooms([]);
+        setLikedRooms([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const [created, liked, following, followers, userData] = await Promise.all([
+          getUserCreatedRooms(),
+          getUserLikedRooms(),
+          getFollowingCount(),
+          getFollowerCount(),
+          getUser(user.uid),
+        ]);
+        console.log('📊 ProfileScreen - Loaded data:', {
+          created: created.length,
+          liked: liked.length,
+          following,
+          followers,
+        });
+        setCreatedRooms(created);
+        setLikedRooms(liked);
+        setFollowingCount(following);
+        setFollowerCount(followers);
+        setUserBio(userData?.bio || 'Crafting beautiful spaces with modern minimalism');
+        setStylePreferences(userData?.stylePreferences || STYLE_PREFERENCES);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRooms();
+  }, [user]);
+
+  // Refresh when screen comes into focus
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      const loadRooms = async () => {
+        if (!user) {
+          setCreatedRooms([]);
+          setLikedRooms([]);
+          return;
+        }
+
+        try {
+          const [created, liked, following, followers, userData] = await Promise.all([
+            getUserCreatedRooms(),
+            getUserLikedRooms(),
+            getFollowingCount(),
+            getFollowerCount(),
+            getUser(user.uid),
+          ]);
+          console.log('📊 ProfileScreen - Refreshed data:', {
+            created: created.length,
+            liked: liked.length,
+            following,
+            followers,
+          });
+          setCreatedRooms(created);
+          setLikedRooms(liked);
+          setFollowingCount(following);
+          setFollowerCount(followers);
+          setUserBio(userData?.bio || 'Crafting beautiful spaces with modern minimalism');
+          setStylePreferences(userData?.stylePreferences || STYLE_PREFERENCES);
+        } catch (error) {
+          console.error('Error loading data:', error);
+        }
+      };
+      loadRooms();
+    });
+
+    return unsubscribe;
+  }, [navigation, user]);
 
   const handleLogout = async () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Logout',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await logout();
-          } catch (error: any) {
-            Alert.alert('Error', error.message);
-          }
+    console.log('🔴 Logout button clicked!');
+    console.log('Platform:', Platform.OS);
+    
+    // On web, Alert might not work well, so we'll use confirm
+    if (Platform.OS === 'web') {
+      const confirmed = (globalThis as any).window?.confirm('Are you sure you want to logout?');
+      if (!confirmed) {
+        console.log('❌ Logout cancelled');
+        return;
+      }
+      console.log('✅ Logout confirmed (web), calling logout()...');
+      try {
+        await logout();
+        console.log('✅ Logout function completed successfully');
+      } catch (error: any) {
+        console.error('❌ Logout failed with error:', error);
+        (globalThis as any).window?.alert(error.message || 'Failed to logout. Please try again.');
+      }
+      return;
+    }
+    
+    // For mobile, use Alert
+    Alert.alert(
+      'Logout', 
+      'Are you sure you want to logout?', 
+      [
+        { 
+          text: 'Cancel', 
+          style: 'cancel',
+          onPress: () => console.log('❌ Logout cancelled')
         },
-      },
-    ]);
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            console.log('✅ Logout confirmed, calling logout()...');
+            try {
+              console.log('📞 Calling logout function...');
+              await logout();
+              console.log('✅ Logout function completed successfully');
+              // Navigation will happen automatically via RootNavigator
+              // when user state becomes null
+            } catch (error: any) {
+              console.error('❌ Logout failed with error:', error);
+              console.error('Error details:', JSON.stringify(error, null, 2));
+              Alert.alert('Error', error.message || 'Failed to logout. Please try again.');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const getInitials = () => {
@@ -65,30 +194,42 @@ export default function ProfileScreen() {
   return (
     <Screen edges={['top']}>
       <TopBar>
-        <IconButton><IconImg source={require('../../assets/icons/search.png')} /></IconButton>
-        <IconButton><IconImg source={require('../../assets/icons/Bell.png')} /></IconButton>
-        <IconButton><IconImg source={require('../../assets/icons/add.png')} /></IconButton>
         <Spacer />
-        <IconButton><IconImg source={require('../../assets/icons/Gear.png')} /></IconButton>
-        <IconButton onPress={handleLogout}><IconImg source={require('../../assets/icons/SignOut.png')} /></IconButton>
+        <IconButton 
+          onPress={() => navigation.navigate('Settings' as never)}
+          activeOpacity={0.7}
+        >
+          <IconImg source={require('../../assets/icons/Gear.png')} />
+        </IconButton>
+        <IconButton 
+          onPress={handleLogout}
+          activeOpacity={0.7}
+          testID="logout-button"
+        >
+          <IconImg source={require('../../assets/icons/SignOut.png')} />
+        </IconButton>
       </TopBar>
 
       <ScrollArea showsVerticalScrollIndicator={false}>
         <Header>
           <Avatar><AvatarText>{getInitials()}</AvatarText></Avatar>
           <Name>{user?.displayName || 'User'}</Name>
-          <Bio>Crafting beautiful spaces with modern minimalism</Bio>
+          <Bio>{userBio || 'Crafting beautiful spaces with modern minimalism'}</Bio>
         </Header>
 
         <StatsRow>
           {[
-            { label: 'History', value: 3 },
-            { label: 'Likes', value: 9 },
-            { label: 'Saved', value: 6 },
-            { label: 'Following', value: 42 },
-            { label: 'Posts', value: 15 },
+            { label: 'Following', value: followingCount, type: 'following' as const },
+            { label: 'Follower', value: followerCount, type: 'followers' as const },
+            { label: 'Created', value: createdRooms.length },
+            { label: 'Liked', value: likedRooms.length },
           ].map((item) => (
-            <Stat key={item.label}>
+            <Stat 
+              key={item.label}
+              onPress={item.type ? () => navigation.navigate('FollowingFollowers', { type: item.type }) : undefined}
+              disabled={!item.type}
+              activeOpacity={item.type ? 0.7 : 1}
+            >
               <StatNum>{item.value}</StatNum>
               <StatLabel>{item.label}</StatLabel>
             </Stat>
@@ -96,44 +237,62 @@ export default function ProfileScreen() {
         </StatsRow>
 
         {/* Style Preferences with original colors */}
-        <PrefSection>
-          <PrefTitle>My Style Preferences</PrefTitle>
-          <PrefWrap>
-            {STYLE_PREFERENCES.map((style, idx) => (
-              <PrefChip key={style} $bg={PREF_COLORS[idx % PREF_COLORS.length]}>
-                <PrefText>{style}</PrefText>
-              </PrefChip>
-            ))}
-          </PrefWrap>
-        </PrefSection>
+        {stylePreferences.length > 0 && (
+          <PrefSection>
+            <PrefTitle>My Style Preferences</PrefTitle>
+            <PrefWrap>
+              {stylePreferences.map((style, idx) => {
+                const styleIndex = STYLE_PREFERENCES.indexOf(style as any);
+                const bgColor = styleIndex >= 0 
+                  ? PREF_COLORS[styleIndex % PREF_COLORS.length]
+                  : PREF_COLORS[idx % PREF_COLORS.length];
+                return (
+                  <PrefChip key={style} $bg={bgColor}>
+                    <PrefText>{style}</PrefText>
+                  </PrefChip>
+                );
+              })}
+            </PrefWrap>
+          </PrefSection>
+        )}
 
         <TabsWrap>
-          {['All History', 'Saved History', 'Liked History'].map(tab => (
+          {['Created', 'Liked'].map(tab => (
             <Tab key={tab} $active={selectedTab === tab} onPress={() => setSelectedTab(tab)}>
               <TabText $active={selectedTab === tab}>{tab}</TabText>
             </Tab>
           ))}
         </TabsWrap>
 
-        <Grid>
-          {[
-            { id: 1, image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=300', liked: true },
-            { id: 2, image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=300', liked: false },
-            { id: 3, image: 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=300', liked: true },
-            { id: 4, image: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=300', liked: false },
-          ].map((item) => (
-            <CardShadow key={item.id}>
-              <Card>
-                <CardImg source={{ uri: item.image }} />
-                {item.liked && (
-                  <HeartFab activeOpacity={0.8} onPress={() => { /* TODO: toggle like */ }}>
-                    <HeartIcon source={require('../../assets/icons/filledheart-white.png')} />
-                  </HeartFab>
-                )}
-              </Card>
-            </CardShadow>
-          ))}
-        </Grid>
+        {loading ? (
+          <LoadingContainer>
+            <ActivityIndicator size="large" color={COLOR.text} />
+          </LoadingContainer>
+        ) : (
+          <Grid>
+            {(selectedTab === 'Created' ? createdRooms : likedRooms).map((room) => (
+              <CardShadow key={room.id}>
+                <Card 
+                  activeOpacity={0.85}
+                  onPress={() => navigation.navigate('RoomDetail' as never, { room } as never)}
+                >
+                  <CardImg source={{ uri: room.uri }} />
+                  {selectedTab === 'Liked' && (
+                    <HeartFab 
+                      activeOpacity={0.8} 
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        // TODO: toggle like
+                      }}
+                    >
+                      <HeartIcon source={require('../../assets/icons/filledheart-white.png')} />
+                    </HeartFab>
+                  )}
+                </Card>
+              </CardShadow>
+            ))}
+          </Grid>
+        )}
 
         <BottomSpace />
       </ScrollArea>
@@ -171,6 +330,9 @@ const IconButton = styled.TouchableOpacity`
   shadow-radius: 4px;
   shadow-offset: 0px 1px;
   elevation: 2;
+  
+  /* Ensure button is clickable */
+  z-index: 10;
 `;
 
 const IconImg = styled.Image`
@@ -224,7 +386,7 @@ const StatsRow = styled.View`
   padding: 20px;
 `;
 
-const Stat = styled.View`
+const Stat = styled.TouchableOpacity`
   align-items: center;
 `;
 
@@ -259,7 +421,7 @@ const PrefWrap = styled.View`
 const PrefChip = styled.View<{ $bg: string }>`
   padding: 8px 16px;
   border-radius: 15px;
-  background-color: ${({ $bg }) => $bg};
+  background-color: ${({ $bg }: { $bg: string }) => $bg};
 `;
 
 const PrefText = styled.Text`
@@ -279,7 +441,7 @@ const Tab = styled.TouchableOpacity<{ $active: boolean }>`
   flex: 1;
   padding-vertical: 10px;
   border-radius: 10px;
-  background-color: ${({ $active }) =>
+  background-color: ${({ $active }: { $active: boolean }) =>
     $active ? '#111827' : 'rgba(17,24,39,0.1)'};
   align-items: center;
   border: 1px solid #111827;
@@ -288,7 +450,7 @@ const Tab = styled.TouchableOpacity<{ $active: boolean }>`
 const TabText = styled.Text<{ $active: boolean }>`
   font-size: 13px;
   font-weight: 600;
-  color: ${({ $active }) => ($active ? '#EDE8DC' : '#111827')};
+  color: ${({ $active }: { $active: boolean }) => ($active ? '#EDE8DC' : '#111827')};
 `;
 
 const Grid = styled.View`
@@ -360,4 +522,10 @@ const HeartIcon = styled.Image`
 
 const BottomSpace = styled.View`
   height: 100px;
+`;
+
+const LoadingContainer = styled.View`
+  padding: 60px 20px;
+  align-items: center;
+  justify-content: center;
 `;

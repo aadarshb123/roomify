@@ -1,8 +1,12 @@
 // src/screens/FavoritesScreen.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components/native';
-import { Dimensions } from 'react-native';
+import { Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { Image as ExpoImage } from 'expo-image';
+import { Room, getSavedRooms, toggleSave, Collection, getCollections, getCollectionRooms } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const COLOR = {
   bg: '#EDE8DC',
@@ -20,30 +24,124 @@ const GUTTER = 14;
 const MAX_CONTENT = 860; // keeps grid nicely centered on large screens
 const COL_W = (Math.min(width, MAX_CONTENT) - H_PADDING * 2 - GUTTER) / 2;
 
-/* ---------- sample data ---------- */
-const COLLECTIONS = [
-  { id: 1, name: 'Modern Cozy Bedroom', count: 5, image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&dpr=2' },
-  { id: 2, name: 'Cozy home', count: 10, image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&dpr=2' },
-  { id: 3, name: 'Scandi Living Room', count: 5, image: 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&dpr=2' },
-  { id: 4, name: 'My home decor', count: 10, image: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800&dpr=2' },
-  { id: 5, name: 'Minimalist Spaces', count: 8, image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&dpr=2' },
-  { id: 6, name: 'Warm & Inviting', count: 12, image: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=800&dpr=2' },
-];
-
-const FAVORITES = [
-  { id: 'f1', uri: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&dpr=2', h: 240 },
-  { id: 'f2', uri: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&dpr=2', h: 200 },
-  { id: 'f3', uri: 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&dpr=2', h: 300 },
-  { id: 'f4', uri: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&dpr=2', h: 180 },
-];
-
 /* ---------- screen ---------- */
 export default function FavoritesScreen() {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const navigation = useNavigation();
+  
+  const [savedRooms, setSavedRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [collections, setCollections] = useState<Array<{ id: string; name: string; count: number; image: string; collection: Collection }>>([]);
+  const [loadingCollections, setLoadingCollections] = useState(true);
 
-  const leftFavs = FAVORITES.filter((_, i) => i % 2 === 0);
-  const rightFavs = FAVORITES.filter((_, i) => i % 2 === 1);
-  const isEmpty = FAVORITES.length === 0;
+  // Load saved rooms and collections from Firestore
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user) {
+        setSavedRooms([]);
+        setCollections([]);
+        setLoading(false);
+        setLoadingCollections(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setLoadingCollections(true);
+        
+        const [rooms, collectionsData] = await Promise.all([
+          getSavedRooms(),
+          getCollections(),
+        ]);
+        
+        setSavedRooms(rooms);
+        
+        // Transform collections to include count and sample image, and keep full collection data
+        const collectionsWithData = await Promise.all(
+          collectionsData.map(async (collection) => {
+            const collectionRooms = await getCollectionRooms(collection.id);
+            const sampleRoom = collectionRooms[0];
+            return {
+              id: collection.id,
+              name: collection.name,
+              count: collection.roomIds.length,
+              image: sampleRoom?.uri || 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&dpr=2',
+              collection: collection, // Store full collection object for navigation
+            };
+          })
+        );
+        
+        setCollections(collectionsWithData);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+        setLoadingCollections(false);
+      }
+    };
+
+    loadData();
+  }, [user]);
+
+  // Refresh when screen comes into focus
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      const loadData = async () => {
+        if (!user) {
+          setSavedRooms([]);
+          setCollections([]);
+          return;
+        }
+
+        try {
+          const [rooms, collectionsData] = await Promise.all([
+            getSavedRooms(),
+            getCollections(),
+          ]);
+          
+          setSavedRooms(rooms);
+          
+          // Transform collections to include count and sample image, and keep full collection data
+          const collectionsWithData = await Promise.all(
+            collectionsData.map(async (collection) => {
+              const collectionRooms = await getCollectionRooms(collection.id);
+              const sampleRoom = collectionRooms[0];
+              return {
+                id: collection.id,
+                name: collection.name,
+                count: collection.roomIds.length,
+                image: sampleRoom?.uri || 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&dpr=2',
+                collection: collection, // Store full collection object for navigation
+              };
+            })
+          );
+          
+          setCollections(collectionsWithData);
+        } catch (error) {
+          console.error('Error loading data:', error);
+        }
+      };
+      loadData();
+    });
+
+    return unsubscribe;
+  }, [navigation, user]);
+
+  const handleUnfavorite = async (roomId: string, e: any) => {
+    e.stopPropagation();
+    try {
+      await toggleSave(roomId);
+      // Remove from local state
+      setSavedRooms(prev => prev.filter(room => room.id !== roomId));
+    } catch (error) {
+      console.error('Error unfavoriting room:', error);
+    }
+  };
+
+  const leftFavs = savedRooms.filter((_, i) => i % 2 === 0);
+  const rightFavs = savedRooms.filter((_, i) => i % 2 === 1);
+  const isEmpty = savedRooms.length === 0;
 
   return (
     <Screen edges={['top']}>
@@ -64,31 +162,46 @@ export default function FavoritesScreen() {
           <Section>
             <TitleRow>
               <SectionTitle>Collections</SectionTitle>
-              <CountText>{COLLECTIONS.length}</CountText>
+              <CountText>{collections.length}</CountText>
             </TitleRow>
 
-            <CollectionsWrap>
-              {COLLECTIONS.map((c) => (
-                <CollectionCell key={c.id}>
-                  <CardShadow>
-                    <CardClip activeOpacity={0.85}>
-                      <CollectionImg source={{ uri: c.image }} />
-                      <CollectionInfo>
-                        <CollectionName numberOfLines={1} ellipsizeMode="tail">
-                          {c.name}
-                        </CollectionName>
-                        <Badge><BadgeText>{c.count}</BadgeText></Badge>
-                      </CollectionInfo>
-                    </CardClip>
-                  </CardShadow>
-                </CollectionCell>
-              ))}
-            </CollectionsWrap>
+            {loadingCollections ? (
+              <LoadingContainer>
+                <ActivityIndicator size="small" color={COLOR.text} />
+              </LoadingContainer>
+            ) : collections.length > 0 ? (
+              <CollectionsWrap>
+                {collections.map((c) => (
+                  <CollectionCell key={c.id}>
+                    <CardShadow>
+                      <CardClip 
+                        activeOpacity={0.85}
+                        onPress={() => navigation.navigate('CollectionDetail' as never, { collection: c.collection } as never)}
+                      >
+                        <CollectionImg source={{ uri: c.image }} />
+                        <CollectionInfo>
+                          <CollectionName numberOfLines={1} ellipsizeMode="tail">
+                            {c.name}
+                          </CollectionName>
+                          <Badge><BadgeText>{c.count}</BadgeText></Badge>
+                        </CollectionInfo>
+                      </CardClip>
+                    </CardShadow>
+                  </CollectionCell>
+                ))}
+              </CollectionsWrap>
+            ) : (
+              <EmptyCollectionsText>No collections yet</EmptyCollectionsText>
+            )}
           </Section>
         </Centered>
 
         {/* favorites grid */}
-        {isEmpty ? (
+        {loading ? (
+          <LoadingContainer>
+            <ActivityIndicator size="large" color={COLOR.text} />
+          </LoadingContainer>
+        ) : isEmpty ? (
           <EmptyWrap>
             <HeartBig source={require('../../assets/icons/filledheart-white.png')} />
             <EmptyTitle>No favorites yet</EmptyTitle>
@@ -105,29 +218,49 @@ export default function FavoritesScreen() {
             <Centered>
               <Grid>
                 <Column>
-                  {leftFavs.map(item => (
-                    <CardShadow key={item.id}>
-                      <CardClip activeOpacity={0.85}>
-                        <Img source={{ uri: item.uri }} style={{ height: item.h, width: COL_W }} />
-                        <HeartFab activeOpacity={0.8} onPress={() => { /* TODO: unfavorite */ }}>
-                          <HeartIcon source={require('../../assets/icons/filledheart-white.png')} />
-                        </HeartFab>
-                      </CardClip>
-                    </CardShadow>
-                  ))}
+                  {leftFavs.map((room, index) => {
+                    // Calculate height based on index for staggered layout
+                    const height = index % 3 === 0 ? 240 : index % 3 === 1 ? 200 : 300;
+                    return (
+                      <CardShadow key={room.id}>
+                        <CardClip 
+                          activeOpacity={0.85}
+                          onPress={() => navigation.navigate('RoomDetail' as never, { room } as never)}
+                        >
+                          <Img source={{ uri: room.uri }} style={{ height, width: COL_W }} />
+                          <HeartFab 
+                            activeOpacity={0.8} 
+                            onPress={(e) => handleUnfavorite(room.id, e)}
+                          >
+                            <HeartIcon source={require('../../assets/icons/filledheart-white.png')} />
+                          </HeartFab>
+                        </CardClip>
+                      </CardShadow>
+                    );
+                  })}
                 </Column>
 
                 <Column>
-                  {rightFavs.map(item => (
-                    <CardShadow key={item.id}>
-                      <CardClip activeOpacity={0.85}>
-                        <Img source={{ uri: item.uri }} style={{ height: item.h, width: COL_W }} />
-                        <HeartFab activeOpacity={0.8} onPress={() => { /* TODO: unfavorite */ }}>
-                          <HeartIcon source={require('../../assets/icons/filledheart-white.png')} />
-                        </HeartFab>
-                      </CardClip>
-                    </CardShadow>
-                  ))}
+                  {rightFavs.map((room, index) => {
+                    // Calculate height based on index for staggered layout
+                    const height = index % 3 === 0 ? 200 : index % 3 === 1 ? 300 : 240;
+                    return (
+                      <CardShadow key={room.id}>
+                        <CardClip 
+                          activeOpacity={0.85}
+                          onPress={() => navigation.navigate('RoomDetail' as never, { room } as never)}
+                        >
+                          <Img source={{ uri: room.uri }} style={{ height, width: COL_W }} />
+                          <HeartFab 
+                            activeOpacity={0.8} 
+                            onPress={(e) => handleUnfavorite(room.id, e)}
+                          >
+                            <HeartIcon source={require('../../assets/icons/filledheart-white.png')} />
+                          </HeartFab>
+                        </CardClip>
+                      </CardShadow>
+                    );
+                  })}
                 </Column>
               </Grid>
             </Centered>
@@ -297,9 +430,23 @@ const CardClip = styled.TouchableOpacity`
   position: relative;
 `;
 
-const Img = styled.Image`
+const Img = styled(ExpoImage)`
   width: ${COL_W}px;
   background-color: #f2f2f2;
+`;
+
+const LoadingContainer = styled.View`
+  padding: 60px 20px;
+  align-items: center;
+  justify-content: center;
+`;
+
+const EmptyCollectionsText = styled.Text`
+  font-size: 14px;
+  color: ${COLOR.subtext};
+  text-align: center;
+  padding: 20px;
+  font-style: italic;
 `;
 
 const HeartFab = styled.TouchableOpacity`

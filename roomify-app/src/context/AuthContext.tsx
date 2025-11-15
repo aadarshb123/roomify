@@ -10,6 +10,7 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
+import { login, createOrUpdateUser } from '../services/api';
 
 interface AuthContextType {
   user: User | null;
@@ -43,6 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('🔄 Auth state changed:', user ? `User: ${user.uid}` : 'User: null (logged out)');
       setUser(user);
       setLoading(false);
     });
@@ -59,6 +61,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await updateProfile(userCredential.user, {
           displayName: displayName,
         });
+
+        // Create user document in Firestore
+        try {
+          await createOrUpdateUser({
+            displayName,
+            email,
+            photoURL: userCredential.user.photoURL || undefined,
+          });
+        } catch (apiError) {
+          console.warn('Failed to create user in Firestore:', apiError);
+          // Don't throw - Firebase auth succeeded, Firestore sync is optional
+        }
       }
     } catch (error: any) {
       console.error('Sign up error:', error);
@@ -69,6 +83,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      
+      // Sync user with Firestore after successful login
+      try {
+        await login();
+      } catch (apiError) {
+        console.warn('Failed to sync with Firestore:', apiError);
+        // Don't throw - Firebase auth succeeded, Firestore sync is optional
+      }
     } catch (error: any) {
       console.error('Sign in error:', error);
       throw new Error(error.message);
@@ -83,6 +105,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { signInWithPopup } = await import('firebase/auth');
         const provider = new GoogleAuthProvider();
         await signInWithPopup(auth, provider);
+        
+        // Sync with backend after successful login
+        try {
+          await login();
+        } catch (apiError) {
+          console.warn('Failed to sync with backend:', apiError);
+          // Don't throw - Firebase auth succeeded, backend sync is optional
+        }
       } else {
         // For mobile apps, show a helpful message
         throw new Error('Google Sign-In is currently only available on web. Please use email/password to sign in on mobile.');
@@ -95,10 +125,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
+      console.log('🔓 Starting logout process...');
+      console.log('Current user before logout:', auth.currentUser?.uid);
+      
       await signOut(auth);
+      
+      console.log('✅ signOut() completed');
+      console.log('Current user after logout:', auth.currentUser);
+      
+      // Force a small delay to ensure state updates
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      console.log('✅ Logout process completed');
+      // The onAuthStateChanged listener will automatically update the user state
+      // which will trigger navigation to AuthNavigator
     } catch (error: any) {
-      console.error('Logout error:', error);
-      throw new Error(error.message);
+      console.error('❌ Logout error:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      throw new Error(error.message || 'Failed to logout');
     }
   };
 
