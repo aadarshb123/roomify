@@ -15,6 +15,10 @@ import {
   BedDouble,
   Home,
 } from "lucide-react";
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { storage, db } from '../../config/firebase';
+import { useAuth } from '../../context/AuthContext';
 
 // 🧩 Dummy interior images (before & after simulation)
 const beforeAfter = [
@@ -31,6 +35,10 @@ export function AIDesignStudio() {
   const [selectedRoomType, setSelectedRoomType] = useState('living');
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
+  const { user } = useAuth();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
 
   const roomTypes = [
     { id: 'living', name: 'Living Room', icon: Sofa },
@@ -81,6 +89,45 @@ export function AIDesignStudio() {
       setCurrentImage((prev) => (prev + 1) % beforeAfter.length);
     }, 3000);
   };
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setImageFile(e.target.files[0]);
+    }
+  };
+  const handleUploadToFirebase = async () => {
+    if (!user) {
+      alert('Please log in before uploading.');
+      return;
+    }
+
+    if (!imageFile) {
+      alert('Please choose a photo first.');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const fileName = `uploads/${user.uid}_${Date.now()}_${imageFile.name}`;
+      const storageRef = ref(storage, fileName);
+      await uploadBytes(storageRef, imageFile);
+      const imageUrl = await getDownloadURL(storageRef);
+
+      await addDoc(collection(db, 'uploads'), {
+        userId: user.uid,
+        imageUrl,
+        roomType: selectedRoomType,
+        style: selectedStyle,
+        createdAt: serverTimestamp(),
+      });
+
+      alert('Upload successful! Your room has been added.');
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Upload failed. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <div className="py-24 px-8 mx-auto">
@@ -121,12 +168,39 @@ export function AIDesignStudio() {
               <p className="text-black/60 mb-6">
                 Drag & drop your photo or click to browse
               </p>
+              <div className="relative inline-block">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-[#c97b63] text-white px-8 py-3 rounded-xl"
+                  onClick={() => document.getElementById('fileInput')?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? 'Uploading...' : 'Choose Photo'}
+                </motion.button>
+                <input
+                  id="fileInput"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+              </div>
+
+              {imageFile && (
+                <p className="text-sm mt-2 text-black/70">
+                  Selected: <span className="font-medium">{imageFile.name}</span>
+                </p>
+              )}
+
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="bg-[#c97b63] text-white px-8 py-3 rounded-xl"
+                onClick={handleUploadToFirebase}
+                disabled={uploading}
+                className="mt-4 bg-[#c97b63]/80 hover:bg-[#c97b63] text-white px-8 py-3 rounded-xl"
               >
-                Choose Photo
+                {uploading ? 'Uploading...' : 'Save to My Pins'}
               </motion.button>
             </div>
           </div>
