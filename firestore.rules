@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Anyone can read user profiles
+      allow read: if true;
+      // Only the user can write their own profile
+      allow write: if isOwner(userId);
+      
+      // User's likes subcollection
+      match /likes/{likeId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+    
+    // Rooms collection - Anyone can read, only authenticated users can create
+    match /rooms/{roomId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Uploads collection - Only authenticated users
+    match /uploads/{uploadId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Likes collection - Only authenticated users can like
+    match /likes/{likeId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Saves collection - Only authenticated users can save
+    match /saves/{saveId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Comments collection
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Collections
+    match /collections/{collectionId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Follows
+    match /follows/{followId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow delete: if isAuthenticated() && resource.data.followerId == request.auth.uid;
+    }
+  }
+}
