@@ -1,8 +1,10 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Heart, Trash2, Wand2 } from "lucide-react";
-import { deleteDoc, doc } from "firebase/firestore";
+import { deleteDoc, doc, collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { useAuth } from "../../context/AuthContext";
+import { likeImage, unlikeImage } from "../utils/likeUtils";
 
 interface ImageDetailPageProps {
   image: any;               // Firestore doc object
@@ -11,12 +13,51 @@ interface ImageDetailPageProps {
 
 export function ImageDetailPage({ image, onBack }: ImageDetailPageProps) {
   const { user } = useAuth();
+  const [isLiked, setIsLiked] = useState(false);
 
   const isMine = user?.uid === image.userId;
+
+  // Check if user has liked this image
+  useEffect(() => {
+    if (!user) {
+      setIsLiked(false);
+      return;
+    }
+
+    const likesRef = collection(db, "users", user.uid, "likes");
+    const unsubscribe = onSnapshot(likesRef, (snapshot) => {
+      const liked = snapshot.docs.some(doc => doc.id === image.id);
+      setIsLiked(liked);
+    });
+
+    return () => unsubscribe();
+  }, [user, image.id]);
 
   // dummy "after" image (just to fill space)
   const placeholderAfter =
     "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80";
+
+  const handleToggleLike = async () => {
+    if (!user) {
+      alert("Please log in to like images!");
+      return;
+    }
+
+    try {
+      if (isLiked) {
+        await unlikeImage(user.uid, image.id);
+      } else {
+        await likeImage(user.uid, image);
+      }
+    } catch (err) {
+      console.error("Failed to toggle like:", err);
+      alert("Failed to update favorite status.");
+    }
+  };
+
+  const handleRestyle = () => {
+    alert("🎨 Demo mode: In production, this would let you regenerate this room design with a different style using AI!");
+  };
 
   const handleDelete = async () => {
     if (!isMine) return;
@@ -101,16 +142,26 @@ export function ImageDetailPage({ image, onBack }: ImageDetailPageProps) {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-white shadow border border-black/10 hover:bg-black/5"
+          onClick={handleToggleLike}
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl shadow border transition-all ${
+            isLiked
+              ? 'bg-red-50 border-red-200'
+              : 'bg-white border-black/10 hover:bg-black/5'
+          }`}
         >
-          <Heart className="w-5 h-5 text-[#c97b63]" />
-          <span>Favorite</span>
+          <Heart
+            className={`w-5 h-5 ${
+              isLiked ? 'text-red-500 fill-red-500' : 'text-[#c97b63]'
+            }`}
+          />
+          <span>{isLiked ? 'Favorited' : 'Favorite'}</span>
         </motion.button>
 
         {/* Restyle */}
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          onClick={handleRestyle}
           className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#c97b63] text-white shadow"
         >
           <Wand2 className="w-5 h-5" />

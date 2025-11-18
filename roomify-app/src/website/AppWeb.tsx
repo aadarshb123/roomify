@@ -54,12 +54,12 @@ export default function AppWeb() {
               transition={{ duration: 0.3 }}
             >
               <section className="hero-section">
-                <Hero />
+                <Hero onNavigate={setCurrentSection} />
               </section>
 
               <FullWidthCentered>
                 <div className="home-content">
-                  <FeaturedProjects />
+                  <FeaturedProjects onNavigate={setCurrentSection} />
                   <CommunityShowcase />
                 </div>
               </FullWidthCentered>
