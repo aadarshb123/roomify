@@ -175,7 +175,7 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
       >
         <Header>
-          <Logo source={require('../../assets/logo-withbg.png')} resizeMode="contain" />
+          <Logo source={require('../../../assets/logo-withbg.png')} resizeMode="contain" />
           <Tagline>Find your next room vibe</Tagline>
         </Header>
 
@@ -354,14 +354,14 @@ const Chip = styled.TouchableOpacity<{ $active: boolean }>`
   max-width: ${CHIP_MAX_W}px;
   padding: 9px 16px;
   border-radius: 20px;
-  background-color: ${({ $active }: { $active: boolean }) => ($active ? COLOR.chipSelectedBg : COLOR.chipBg)};
+  background-color: ${(props: { $active: boolean }) => (props.$active ? COLOR.chipSelectedBg : COLOR.chipBg)};
   border: 1px solid ${COLOR.text};       /* mirrors LoginScreen field/CTA border */
   justify-content: center;
   align-items: center;
 `;
 
 const ChipText = styled.Text<{ $active: boolean }>`
-  color: ${({ $active }: { $active: boolean }) => ($active ? COLOR.chipSelectedText : COLOR.chipText)};
+  color: ${(props: { $active: boolean }) => (props.$active ? COLOR.chipSelectedText : COLOR.chipText)};
   font-size: 15px;
   font-weight: 500;
 `;

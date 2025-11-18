@@ -203,7 +203,7 @@ export default function FavoritesScreen() {
           </LoadingContainer>
         ) : isEmpty ? (
           <EmptyWrap>
-            <HeartBig source={require('../../assets/icons/filledheart-white.png')} />
+            <HeartBig source={require('../../../assets/icons/filledheart-white.png')} />
             <EmptyTitle>No favorites yet</EmptyTitle>
             <EmptySub>Tap the heart on any idea to save it here.</EmptySub>
           </EmptyWrap>
@@ -223,16 +223,16 @@ export default function FavoritesScreen() {
                     const height = index % 3 === 0 ? 240 : index % 3 === 1 ? 200 : 300;
                     return (
                       <CardShadow key={room.id}>
-                        <CardClip 
+                        <CardClip
                           activeOpacity={0.85}
                           onPress={() => navigation.navigate('RoomDetail' as never, { room } as never)}
                         >
                           <Img source={{ uri: room.uri }} style={{ height, width: COL_W }} />
-                          <HeartFab 
-                            activeOpacity={0.8} 
+                          <HeartFab
+                            activeOpacity={0.8}
                             onPress={(e) => handleUnfavorite(room.id, e)}
                           >
-                            <HeartIcon source={require('../../assets/icons/filledheart-white.png')} />
+                            <HeartIcon source={require('../../../assets/icons/filledheart-white.png')} />
                           </HeartFab>
                         </CardClip>
                       </CardShadow>
@@ -246,16 +246,16 @@ export default function FavoritesScreen() {
                     const height = index % 3 === 0 ? 200 : index % 3 === 1 ? 300 : 240;
                     return (
                       <CardShadow key={room.id}>
-                        <CardClip 
+                        <CardClip
                           activeOpacity={0.85}
                           onPress={() => navigation.navigate('RoomDetail' as never, { room } as never)}
                         >
                           <Img source={{ uri: room.uri }} style={{ height, width: COL_W }} />
-                          <HeartFab 
-                            activeOpacity={0.8} 
+                          <HeartFab
+                            activeOpacity={0.8}
                             onPress={(e) => handleUnfavorite(room.id, e)}
                           >
-                            <HeartIcon source={require('../../assets/icons/filledheart-white.png')} />
+                            <HeartIcon source={require('../../../assets/icons/filledheart-white.png')} />
                           </HeartFab>
                         </CardClip>
                       </CardShadow>

@@ -51,7 +51,7 @@ export default function TabNavigator() {
         name="HomeStack"
         options={{
           tabBarIcon: ({ color }) => (
-            <TabBarIcon source={require('../../assets/icons/home.png')} color={color} />
+            <TabBarIcon source={require('../../../assets/icons/home.png')} color={color} />
           ),
         }}
       >
@@ -68,7 +68,7 @@ export default function TabNavigator() {
         name="SearchStack"
         options={{
           tabBarIcon: ({ color }) => (
-            <TabBarIcon source={require('../../assets/icons/search.png')} color={color} />
+            <TabBarIcon source={require('../../../assets/icons/search.png')} color={color} />
           ),
         }}
       >
@@ -86,7 +86,7 @@ export default function TabNavigator() {
         component={AddImageScreen}
         options={{
           tabBarIcon: ({ color }) => (
-            <TabBarIcon source={require('../../assets/icons/add.png')} color={color} />
+            <TabBarIcon source={require('../../../assets/icons/add.png')} color={color} />
           ),
         }}
       />
@@ -94,7 +94,7 @@ export default function TabNavigator() {
         name="FavoritesStack"
         options={{
           tabBarIcon: ({ color }) => (
-            <TabBarIcon source={require('../../assets/icons/heart.png')} color={color} />
+            <TabBarIcon source={require('../../../assets/icons/heart.png')} color={color} />
           ),
         }}
       >
@@ -112,7 +112,7 @@ export default function TabNavigator() {
         name="ProfileStack"
         options={{
           tabBarIcon: ({ color }) => (
-            <TabBarIcon source={require('../../assets/icons/profile.png')} color={color} />
+            <TabBarIcon source={require('../../../assets/icons/profile.png')} color={color} />
           ),
         }}
       >

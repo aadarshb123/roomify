@@ -300,7 +300,7 @@ export default function SearchScreen() {
         {/* Search Bar + filters + history */}
         <SearchWrap>
           <SearchInner>
-            <IconImg source={require('../../assets/icons/search.png')} />
+            <IconImg source={require('../../../assets/icons/search.png')} />
             <StyledInput
               placeholder="Search"
               placeholderTextColor={COLOR.hint}
@@ -311,7 +311,7 @@ export default function SearchScreen() {
               onSubmitEditing={handleSubmit}
               returnKeyType="search"
             />
-            <IconImg source={require('../../assets/icons/Microphone.png')} />
+            <IconImg source={require('../../../assets/icons/Microphone.png')} />
           </SearchInner>
 
           {/* search history dropdown (inline) */}
@@ -830,18 +830,18 @@ const SectionSub = styled.Text`
 /* Grid helpers */
 const Row = styled.View<{ gap?: number }>`
   flex-direction: row;
-  gap: ${({ gap }) => gap ?? 10}px;
+  gap: ${({ gap }: { gap?: number }) => gap ?? 10}px;
 `;
 
 const Col = styled.View<{ gap?: number }>`
   flex-direction: column;
-  gap: ${({ gap }) => gap ?? 10}px;
+  gap: ${({ gap }: { gap?: number }) => gap ?? 10}px;
 `;
 
 const Wrap = styled.View<{ gap?: number }>`
   flex-direction: row;
   flex-wrap: wrap;
-  gap: ${({ gap }) => gap ?? 8}px;
+  gap: ${({ gap }: { gap?: number }) => gap ?? 8}px;
 `;
 
 const Flex1 = styled.View`

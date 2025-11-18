@@ -3,8 +3,8 @@ import styled from 'styled-components/native';
 import { Alert, Dimensions, Platform, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../context/AuthContext';
-import { Room, getUserCreatedRooms, getUserLikedRooms, getFollowingCount, getFollowerCount, getUser } from '../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { Room, getUserCreatedRooms, getUserLikedRooms, getFollowingCount, getFollowerCount, getUser } from '../../services/api';
 
 const COLOR = {
   bg: '#EDE8DC',        // same creamy background
@@ -195,18 +195,18 @@ export default function ProfileScreen() {
     <Screen edges={['top']}>
       <TopBar>
         <Spacer />
-        <IconButton 
+        <IconButton
           onPress={() => navigation.navigate('Settings' as never)}
           activeOpacity={0.7}
         >
-          <IconImg source={require('../../assets/icons/Gear.png')} />
+          <IconImg source={require('../../../assets/icons/Gear.png')} />
         </IconButton>
-        <IconButton 
+        <IconButton
           onPress={handleLogout}
           activeOpacity={0.7}
           testID="logout-button"
         >
-          <IconImg source={require('../../assets/icons/SignOut.png')} />
+          <IconImg source={require('../../../assets/icons/SignOut.png')} />
         </IconButton>
       </TopBar>
 
@@ -272,20 +272,20 @@ export default function ProfileScreen() {
           <Grid>
             {(selectedTab === 'Created' ? createdRooms : likedRooms).map((room) => (
               <CardShadow key={room.id}>
-                <Card 
+                <Card
                   activeOpacity={0.85}
                   onPress={() => navigation.navigate('RoomDetail' as never, { room } as never)}
                 >
                   <CardImg source={{ uri: room.uri }} />
                   {selectedTab === 'Liked' && (
-                    <HeartFab 
-                      activeOpacity={0.8} 
+                    <HeartFab
+                      activeOpacity={0.8}
                       onPress={(e) => {
                         e.stopPropagation();
                         // TODO: toggle like
                       }}
                     >
-                      <HeartIcon source={require('../../assets/icons/filledheart-white.png')} />
+                      <HeartIcon source={require('../../../assets/icons/filledheart-white.png')} />
                     </HeartFab>
                   )}
                 </Card>
@@ -441,8 +441,8 @@ const Tab = styled.TouchableOpacity<{ $active: boolean }>`
   flex: 1;
   padding-vertical: 10px;
   border-radius: 10px;
-  background-color: ${({ $active }: { $active: boolean }) =>
-    $active ? '#111827' : 'rgba(17,24,39,0.1)'};
+  background-color: ${(props: { $active: boolean }) =>
+    props.$active ? '#111827' : 'rgba(17,24,39,0.1)'};
   align-items: center;
   border: 1px solid #111827;
 `;
@@ -450,7 +450,7 @@ const Tab = styled.TouchableOpacity<{ $active: boolean }>`
 const TabText = styled.Text<{ $active: boolean }>`
   font-size: 13px;
   font-weight: 600;
-  color: ${({ $active }: { $active: boolean }) => ($active ? '#EDE8DC' : '#111827')};
+  color: ${(props: { $active: boolean }) => (props.$active ? '#EDE8DC' : '#111827')};
 `;
 
 const Grid = styled.View`

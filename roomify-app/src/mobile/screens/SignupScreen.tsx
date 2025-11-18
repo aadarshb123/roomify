@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Alert, ActivityIndicator } from 'react-native';
 import styled from 'styled-components/native';
-import { useAuth } from '../context/AuthContext';
-import logoFull from '../../assets/logo-full.png';
-import googleG from '../../assets/web_light_rd_na.svg';
+import { useAuth } from '../../context/AuthContext';
+import logoFull from '../../../assets/logo-full.png';
+import googleG from '../../../assets/web_light_rd_na.svg';
 
 const COLOR = {
   bg: '#EDE8DC',
@@ -104,7 +104,9 @@ export default function SignupScreen({ navigation }: any) {
 
           <BottomLinks>
             <Muted>ALREADY HAVE AN ACCOUNT?</Muted>
-            <Underline onPress={() => navigation.navigate('Login')}>LOG IN</Underline>
+            <UnderlineButton onPress={() => navigation.navigate('Login')}>
+              <Underline>LOG IN</Underline>
+            </UnderlineButton>
           </BottomLinks>
         </FormGroup>
       </Container>
@@ -231,6 +233,8 @@ const Muted = styled.Text`
   opacity: 0.85;
   font-size: 14px;
 `;
+
+const UnderlineButton = styled.TouchableOpacity``;
 
 const Underline = styled.Text`
   color: ${COLOR.text};
