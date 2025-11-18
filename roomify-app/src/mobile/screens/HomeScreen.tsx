@@ -236,8 +236,8 @@ export default function HomeScreen() {
                         >
                           <HeartIcon 
                             source={isSaved 
-                              ? require('../../assets/icons/filledheart-white.png')
-                              : require('../../assets/icons/heart.png')
+                              ? require('../../../assets/icons/filledheart-white.png')
+                              : require('../../../assets/icons/heart.png')
                             } 
                           />
                         </HeartButton>
@@ -267,8 +267,8 @@ export default function HomeScreen() {
                         >
                           <HeartIcon 
                             source={isSaved 
-                              ? require('../../assets/icons/filledheart-white.png')
-                              : require('../../assets/icons/heart.png')
+                              ? require('../../../assets/icons/filledheart-white.png')
+                              : require('../../../assets/icons/heart.png')
                             } 
                           />
                         </HeartButton>

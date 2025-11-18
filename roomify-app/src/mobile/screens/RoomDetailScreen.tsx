@@ -264,7 +264,7 @@ export default function RoomDetailScreen({ route, navigation }: RoomDetailScreen
           <ActionRow>
             <ActionButton onPress={handleLike} activeOpacity={0.7}>
               <ActionIcon 
-                source={liked ? require('../../assets/icons/filledheart.png') : require('../../assets/icons/heart.png')}
+                source={liked ? require('../../../assets/icons/filledheart.png') : require('../../../assets/icons/heart.png')}
                 style={{ tintColor: liked ? '#EF4444' : COLOR.text, marginLeft: 4, marginRight: 10 }}
               />
               <ActionText style={{ color: liked ? '#EF4444' : COLOR.text }}>{likeCount}</ActionText>
@@ -274,12 +274,12 @@ export default function RoomDetailScreen({ route, navigation }: RoomDetailScreen
               onPress={() => navigation.navigate('Comments', { room })} 
               activeOpacity={0.7}
             >
-              <ActionIcon source={require('../../assets/icons/ChatCircleDots.png')} style={{ marginRight: 6 }} />
+              <ActionIcon source={require('../../../assets/icons/ChatCircleDots.png')} style={{ marginRight: 6 }} />
               <ActionText>{commentCount}</ActionText>
             </ActionButton>
 
             <ActionButton onPress={handleShare} activeOpacity={0.7}>
-              <ActionIcon source={require('../../assets/icons/Export.png')} style={{ marginRight: 6 }} />
+              <ActionIcon source={require('../../../assets/icons/Export.png')} style={{ marginRight: 6 }} />
               <ActionText>Share</ActionText>
             </ActionButton>
 
