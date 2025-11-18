@@ -9,6 +9,7 @@ import {
   GoogleAuthProvider,
   updateProfile,
 } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../config/firebase';
 import { login, createOrUpdateUser } from '../services/api';
 
@@ -127,13 +128,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('🔓 Starting logout process...');
       console.log('Current user before logout:', auth.currentUser?.uid);
       
+      // Clear AsyncStorage preferences
+      try {
+        await AsyncStorage.removeItem('userPreferences');
+        console.log('✅ AsyncStorage cleared');
+      } catch (storageError) {
+        console.warn('⚠️ Failed to clear AsyncStorage:', storageError);
+        // Continue with logout even if AsyncStorage fails
+      }
+      
+      // Sign out from Firebase
       await signOut(auth);
       
       console.log('✅ signOut() completed');
       console.log('Current user after logout:', auth.currentUser);
       
-      // Force a small delay to ensure state updates
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Explicitly set user to null to trigger immediate UI update
+      setUser(null);
       
       console.log('✅ Logout process completed');
       // The onAuthStateChanged listener will automatically update the user state

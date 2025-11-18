@@ -34,9 +34,8 @@ export function ProfilePage({ setCurrentSection, setSelectedImage }: any) {
   const [activeTab, setActiveTab] = useState("designs");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editName, setEditName] = useState(user?.displayName || "");
-  const [editBio, setEditBio] = useState(
-    "Passionate interior designer with over 10 years of experience"
-  );
+  const [editBio, setEditBio] = useState("");
+  const [userBio, setUserBio] = useState("");
   const [saving, setSaving] = useState(false);
 
   // ===== NEW STATE FOR REAL IMAGES =====
@@ -73,6 +72,34 @@ export function ProfilePage({ setCurrentSection, setSelectedImage }: any) {
     return () => unsub();
   }, [user]);
 
+  // ===== LOAD USER BIO FROM FIRESTORE =====
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!user) return;
+
+      try {
+        const { doc: firestoreDoc, getDoc } = await import("firebase/firestore");
+        const userDoc = await getDoc(firestoreDoc(db, "users", user.uid));
+        
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const bio = userData.bio || "Passionate interior designer with over 10 years of experience";
+          setUserBio(bio);
+          setEditBio(bio);
+        } else {
+          setUserBio("Passionate interior designer with over 10 years of experience");
+          setEditBio("Passionate interior designer with over 10 years of experience");
+        }
+      } catch (error) {
+        console.error("Error loading user data:", error);
+        setUserBio("Passionate interior designer with over 10 years of experience");
+        setEditBio("Passionate interior designer with over 10 years of experience");
+      }
+    };
+
+    loadUserData();
+  }, [user]);
+
   const handleSaveProfile = async () => {
     if (!user) return;
 
@@ -94,8 +121,14 @@ export function ProfilePage({ setCurrentSection, setSelectedImage }: any) {
         { merge: true }
       );
       
+      // Update local state immediately
+      setUserBio(editBio);
+      
       alert("Profile updated successfully!");
       setIsEditModalOpen(false);
+      
+      // Force reload the user object
+      window.location.reload();
     } catch (error: any) {
       alert("Error updating profile: " + error.message);
     } finally {
@@ -138,11 +171,11 @@ export function ProfilePage({ setCurrentSection, setSelectedImage }: any) {
                 </motion.button>
               </motion.div>
 
-              <div>
+          <div>
                 <h1 className="text-4xl mb-2 font-semibold">
                   {user?.displayName || user?.email || "Guest"}
                 </h1>
-                <p className="text-white/90 mb-4">Interior Designer</p>
+                <p className="text-white/90 mb-4">{userBio || "Interior Designer"}</p>
                 <div className="flex items-center gap-4 flex-wrap">
                   <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg">
                     <Award className="w-4 h-4" />
@@ -198,8 +231,7 @@ export function ProfilePage({ setCurrentSection, setSelectedImage }: any) {
         >
           <h2 className="text-2xl mb-4 font-semibold">About Me</h2>
           <p className="text-black/70 leading-relaxed mb-4">
-            Passionate interior designer with over 10 years of experience creating beautiful,
-            functional spaces. Specializing in modern minimalism with a touch of Japanese aesthetics.
+            {userBio || "Passionate interior designer with over 10 years of experience creating beautiful, functional spaces."}
           </p>
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-sm text-black/60">Specialties:</span>

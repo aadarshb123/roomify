@@ -21,6 +21,8 @@ export default function RootNavigator() {
 
   const checkPreferences = async () => {
     if (!user) {
+      // Reset preferences state when user logs out
+      setHasCompletedPrefs(false);
       setCheckingPrefs(false);
       return;
     }
