@@ -4,7 +4,11 @@ import { ArrowRight, Sparkles, Wand2, Zap } from "lucide-react";
 const heroBg =
   "https://images.unsplash.com/photo-1615874959474-d609969a20ed?auto=format&fit=crop&w=2000&q=80";
 
-export function Hero() {
+interface HeroProps {
+  onNavigate: (section: string) => void;
+}
+
+export function Hero({ onNavigate }: HeroProps) {
   return (
     <section className="hero-section relative h-screen overflow-hidden bg-[#f5f0ea]">
       {/* ===== Background image with smooth parallax ===== */}
@@ -100,6 +104,7 @@ export function Hero() {
                 boxShadow: "0 20px 60px rgba(201, 123, 99, 0.4)",
               }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => onNavigate("upload")}
               className="flex items-center gap-3 bg-linear-to-r from-[#c97b63] to-[#d4956f] text-white px-8 py-4 rounded-xl shadow-2xl"
             >
               <Wand2 className="w-5 h-5" />
@@ -110,6 +115,7 @@ export function Hero() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => onNavigate("explore")}
               className="flex items-center gap-3 bg-white/10 backdrop-blur-md text-white px-8 py-4 rounded-xl border border-white/20"
             >
               <span className="text-lg font-medium">View Examples</span>

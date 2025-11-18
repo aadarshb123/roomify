@@ -115,6 +115,7 @@ export function ProfilePage({ setCurrentSection, setSelectedImage }: any) {
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
+                  onClick={() => alert("📸 Demo mode: In production, this would allow you to upload a new profile picture!")}
                   className="absolute bottom-0 right-0 w-10 h-10 bg-white text-[#c97b63] rounded-full flex items-center justify-center shadow-lg"
                 >
                   <Edit className="w-5 h-5" />

@@ -83,12 +83,28 @@ export function AIDesignStudio() {
   ];
 
   const handleGenerate = () => {
+    if (!imageFile) {
+      alert("Please upload an image first!");
+      return;
+    }
     setIsGenerating(true);
+    // Note: This is a demo. In production, this would call an AI service (Replicate, OpenAI, etc.)
     setTimeout(() => {
       setIsGenerating(false);
       setCurrentImage((prev) => (prev + 1) % beforeAfter.length);
+      alert("✨ Demo mode: In production, this would generate a real AI transformation using your selected style!");
     }, 3000);
   };
+
+  const handleExamplePhotos = () => {
+    alert("📸 Demo: In production, this would show example room photos you can use to test the AI designer.");
+  };
+
+  const handleRandomStyle = () => {
+    const randomStyleIndex = Math.floor(Math.random() * styles.length);
+    setSelectedStyle(styles[randomStyleIndex].id);
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setImageFile(e.target.files[0]);
@@ -117,6 +133,7 @@ export function AIDesignStudio() {
         imageUrl,
         roomType: selectedRoomType,
         style: selectedStyle,
+        public: true, // Make uploads public so they appear in Explore
         createdAt: serverTimestamp(),
       });
 
@@ -302,6 +319,7 @@ export function AIDesignStudio() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={handleExamplePhotos}
               className="flex-1 flex items-center justify-center gap-2 bg-white/50 backdrop-blur-sm py-3 rounded-xl border border-black/10"
             >
               <Image className="w-5 h-5" />
@@ -310,6 +328,7 @@ export function AIDesignStudio() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={handleRandomStyle}
               className="flex-1 flex items-center justify-center gap-2 bg-white/50 backdrop-blur-sm py-3 rounded-xl border border-black/10"
             >
               <Shuffle className="w-5 h-5" />

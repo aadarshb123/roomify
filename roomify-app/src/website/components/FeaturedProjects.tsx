@@ -1,7 +1,11 @@
 import { motion } from "framer-motion";
 import { Heart, Eye, Download, ExternalLink } from "lucide-react";
 
-export function FeaturedProjects() {
+interface FeaturedProjectsProps {
+  onNavigate: (section: string) => void;
+}
+
+export function FeaturedProjects({ onNavigate }: FeaturedProjectsProps) {
   const projects = [
     {
       image:
@@ -108,6 +112,10 @@ export function FeaturedProjects() {
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        alert("Sign in to save this to your favorites!");
+                      }}
                       className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center"
                     >
                       <Heart className="w-5 h-5 text-white" />
@@ -115,6 +123,10 @@ export function FeaturedProjects() {
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(project.image, '_blank');
+                      }}
                       className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center"
                     >
                       <Download className="w-5 h-5 text-white" />
@@ -124,6 +136,10 @@ export function FeaturedProjects() {
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onNavigate("explore");
+                    }}
                     className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center"
                   >
                     <ExternalLink className="w-5 h-5 text-white" />
@@ -160,6 +176,7 @@ export function FeaturedProjects() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+                    onClick={() => onNavigate("explore")}
                     className="text-[#c97b63] text-sm font-medium"
                   >
                     View Details →
@@ -180,9 +197,10 @@ export function FeaturedProjects() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => onNavigate("explore")}
             className="bg-[#c97b63] text-white px-12 py-4 rounded-xl shadow-lg"
           >
-            Load More Projects
+            Explore More Designs
           </motion.button>
         </motion.div>
       </div>
