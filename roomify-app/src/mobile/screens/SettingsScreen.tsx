@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import { Alert, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 const COLOR = {
   bg: '#EDE8DC',

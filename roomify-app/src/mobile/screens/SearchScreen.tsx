@@ -16,7 +16,7 @@ import {
   getEditorsPicks,
   User
 } from '../../services/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 const COLOR = {
   bg: '#EDE8DC',
