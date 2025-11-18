@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import { ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Room, getUser, User, getComments, createComment, Comment } from '../../services/api';
-import { auth } from '../config/firebase';
+import { auth } from '../../config/firebase';
 
 const COLOR = {
   bg: '#EDE8DC',
