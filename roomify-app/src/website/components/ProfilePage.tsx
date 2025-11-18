@@ -19,7 +19,10 @@ import {
   query,
   where,
   onSnapshot,
-  orderBy
+  orderBy,
+  doc,
+  setDoc,
+  serverTimestamp
 } from "firebase/firestore";
 
 const profilePic =
@@ -75,9 +78,22 @@ export function ProfilePage({ setCurrentSection, setSelectedImage }: any) {
 
     setSaving(true);
     try {
+      // Update Firebase Auth profile
       await updateProfile(user, {
         displayName: editName
       });
+      
+      // Update Firestore user document
+      await setDoc(
+        doc(db, "users", user.uid),
+        {
+          displayName: editName,
+          bio: editBio,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+      
       alert("Profile updated successfully!");
       setIsEditModalOpen(false);
     } catch (error: any) {

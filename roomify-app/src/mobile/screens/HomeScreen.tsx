@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import styled from 'styled-components/native';
-import { Dimensions, ScrollView, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
+import { Dimensions, ScrollView, ActivityIndicator, TouchableOpacity, Text, Alert } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image as ExpoImage } from 'expo-image';
 import { getRooms, Room, toggleSave, getSavedRooms } from '../../services/api';
@@ -92,11 +92,6 @@ export default function HomeScreen() {
   // Fetch rooms from backend
   useEffect(() => {
     const fetchRooms = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
         setError(null);
@@ -121,13 +116,17 @@ export default function HomeScreen() {
     };
 
     fetchRooms();
-  }, [user, selected]);
+  }, [selected]);
 
   // Handle heart toggle
   const handleToggleFavorite = async (roomId: string, e: any) => {
     e.stopPropagation();
     
     if (!user) {
+      Alert.alert('Login Required', 'Please log in to save your favorite rooms', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Log In', onPress: () => navigation.navigate('Login' as never) }
+      ]);
       return;
     }
 

@@ -96,6 +96,14 @@ export default function RoomDetailScreen({ route, navigation }: RoomDetailScreen
   }, [room.userId, room.id]);
 
   const handleLike = async () => {
+    if (!currentUser) {
+      Alert.alert('Login Required', 'Please log in to like rooms', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Log In', onPress: () => navigation.navigate('Login' as never) }
+      ]);
+      return;
+    }
+    
     try {
       const result = await toggleLike(room.id);
       setLiked(result.liked);
@@ -106,6 +114,14 @@ export default function RoomDetailScreen({ route, navigation }: RoomDetailScreen
   };
 
   const handleSave = async () => {
+    if (!currentUser) {
+      Alert.alert('Login Required', 'Please log in to save rooms', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Log In', onPress: () => navigation.navigate('Login' as never) }
+      ]);
+      return;
+    }
+    
     try {
       const result = await toggleSave(room.id);
       setSaved(result.saved);

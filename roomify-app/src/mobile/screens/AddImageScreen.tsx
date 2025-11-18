@@ -110,17 +110,32 @@ export default function AddImageScreen() {
       await uploadBytes(fileRef, blob);
       const downloadURL = await getDownloadURL(fileRef);
 
+      // Create room entry so it appears in the app
+      const roomData = {
+        userId: user.uid,
+        uri: downloadURL,
+        title: description || 'My Room Design',
+        roomType: selectedRoomTypes[0] || 'Living Room',
+        style: selectedStyles[0] || 'Modern',
+        description,
+        createdAt: serverTimestamp(),
+      };
+      
+      await addDoc(collection(db, 'rooms'), roomData);
+
+      // Also save to uploads collection for tracking
       await addDoc(collection(db, 'uploads'), {
         userId: user.uid,
         imageUrl: downloadURL,
         roomTypes: selectedRoomTypes,
         styles: selectedStyles,
         description,
-        status: 'pending',
+        public: true,
+        status: 'approved',
         createdAt: serverTimestamp(),
       });
 
-      Alert.alert('Success', 'Your room image has been uploaded!');
+      Alert.alert('Success', 'Your room image has been uploaded and will appear in the feed!');
       setLocalImageUri(null);
       setSelectedRoomTypes([]);
       setSelectedStyles([]);
