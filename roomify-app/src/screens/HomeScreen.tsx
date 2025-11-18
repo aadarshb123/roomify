@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import { Dimensions, ScrollView, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image as ExpoImage } from 'expo-image';
-import { getRooms, Room } from '../services/api';
+import { getRooms, Room, toggleSave, getSavedRooms } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
@@ -44,9 +44,50 @@ export default function HomeScreen() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [savedRoomIds, setSavedRoomIds] = useState<Set<string>>(new Set());
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const navigation = useNavigation<any>();
+
+  // Load saved rooms to track which ones are favorited
+  useEffect(() => {
+    const loadSavedRooms = async () => {
+      if (!user) {
+        setSavedRoomIds(new Set());
+        return;
+      }
+
+      try {
+        const savedRooms = await getSavedRooms();
+        const savedIds = new Set(savedRooms.map(room => room.id));
+        setSavedRoomIds(savedIds);
+      } catch (err) {
+        console.error('Error loading saved rooms:', err);
+      }
+    };
+
+    loadSavedRooms();
+  }, [user]);
+
+  // Refresh saved rooms when screen comes into focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', async () => {
+      if (!user) {
+        setSavedRoomIds(new Set());
+        return;
+      }
+
+      try {
+        const savedRooms = await getSavedRooms();
+        const savedIds = new Set(savedRooms.map(room => room.id));
+        setSavedRoomIds(savedIds);
+      } catch (err) {
+        console.error('Error loading saved rooms:', err);
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, user]);
 
   // Fetch rooms from backend
   useEffect(() => {
@@ -81,6 +122,42 @@ export default function HomeScreen() {
 
     fetchRooms();
   }, [user, selected]);
+
+  // Handle heart toggle
+  const handleToggleFavorite = async (roomId: string, e: any) => {
+    e.stopPropagation();
+    
+    if (!user) {
+      return;
+    }
+
+    try {
+      // Optimistic update
+      const isCurrentlySaved = savedRoomIds.has(roomId);
+      const newSavedIds = new Set(savedRoomIds);
+      
+      if (isCurrentlySaved) {
+        newSavedIds.delete(roomId);
+      } else {
+        newSavedIds.add(roomId);
+      }
+      setSavedRoomIds(newSavedIds);
+
+      // Sync with Firebase
+      await toggleSave(roomId);
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+      // Revert optimistic update on error
+      const isCurrentlySaved = savedRoomIds.has(roomId);
+      const newSavedIds = new Set(savedRoomIds);
+      if (isCurrentlySaved) {
+        newSavedIds.add(roomId);
+      } else {
+        newSavedIds.delete(roomId);
+      }
+      setSavedRoomIds(newSavedIds);
+    }
+  };
 
   const filtered = useMemo(() => {
     if (loading) return [];
@@ -139,38 +216,66 @@ export default function HomeScreen() {
           ) : (
             <Grid>
               <Column>
-                {left.map((item) => (
-                  <CardShadow key={item.id}>
-                    <Card 
-                      activeOpacity={0.85}
-                      onPress={() => navigation.navigate('RoomDetail', { room: item })}
-                    >
-                      <CardImg
-                        source={{ uri: item.uri }}
-                        style={{ width: COL_W, height: item.h || 240, borderRadius: 14 }}
-                        contentFit="cover"
-                        transition={120}
-                      />
-                    </Card>
-                  </CardShadow>
-                ))}
+                {left.map((item) => {
+                  const isSaved = savedRoomIds.has(item.id);
+                  return (
+                    <CardShadow key={item.id}>
+                      <Card 
+                        activeOpacity={0.85}
+                        onPress={() => navigation.navigate('RoomDetail', { room: item })}
+                      >
+                        <CardImg
+                          source={{ uri: item.uri }}
+                          style={{ width: COL_W, height: item.h || 240, borderRadius: 14 }}
+                          contentFit="cover"
+                          transition={120}
+                        />
+                        <HeartButton
+                          activeOpacity={0.8}
+                          onPress={(e) => handleToggleFavorite(item.id, e)}
+                        >
+                          <HeartIcon 
+                            source={isSaved 
+                              ? require('../../assets/icons/filledheart-white.png')
+                              : require('../../assets/icons/heart.png')
+                            } 
+                          />
+                        </HeartButton>
+                      </Card>
+                    </CardShadow>
+                  );
+                })}
               </Column>
               <Column>
-                {right.map((item) => (
-                  <CardShadow key={item.id}>
-                    <Card 
-                      activeOpacity={0.85}
-                      onPress={() => navigation.navigate('RoomDetail', { room: item })}
-                    >
-                      <CardImg
-                        source={{ uri: item.uri }}
-                        style={{ width: COL_W, height: item.h || 240, borderRadius: 14 }}
-                        contentFit="cover"
-                        transition={120}
-                      />
-                    </Card>
-                  </CardShadow>
-                ))}
+                {right.map((item) => {
+                  const isSaved = savedRoomIds.has(item.id);
+                  return (
+                    <CardShadow key={item.id}>
+                      <Card 
+                        activeOpacity={0.85}
+                        onPress={() => navigation.navigate('RoomDetail', { room: item })}
+                      >
+                        <CardImg
+                          source={{ uri: item.uri }}
+                          style={{ width: COL_W, height: item.h || 240, borderRadius: 14 }}
+                          contentFit="cover"
+                          transition={120}
+                        />
+                        <HeartButton
+                          activeOpacity={0.8}
+                          onPress={(e) => handleToggleFavorite(item.id, e)}
+                        >
+                          <HeartIcon 
+                            source={isSaved 
+                              ? require('../../assets/icons/filledheart-white.png')
+                              : require('../../assets/icons/heart.png')
+                            } 
+                          />
+                        </HeartButton>
+                      </Card>
+                    </CardShadow>
+                  );
+                })}
               </Column>
             </Grid>
           )}
@@ -282,6 +387,21 @@ const Card = styled.TouchableOpacity`
 
 const CardImg = styled(ExpoImage)`
   background-color: #f2f2f2;
+`;
+
+const HeartButton = styled.TouchableOpacity`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 6px;
+  z-index: 10;
+`;
+
+const HeartIcon = styled.Image`
+  width: 22px;
+  height: 22px;
+  resize-mode: contain;
+  opacity: 0.9;
 `;
 
 const LoadingContainer = styled.View`
