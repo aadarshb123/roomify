@@ -7,8 +7,10 @@ import {
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
+  signInWithCredential,
   updateProfile,
 } from 'firebase/auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { auth } from '../config/firebase';
 import { login, createOrUpdateUser } from '../services/api';
 
@@ -43,6 +45,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Configure Google Sign-In for iOS
+    if (Platform.OS === 'ios') {
+      GoogleSignin.configure({
+        iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+        webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      });
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       console.log('🔄 Auth state changed:', user ? `User: ${user.uid}` : 'User: null (logged out)');
       setUser(user);
@@ -99,26 +109,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithGoogle = async () => {
     try {
-      // Google Sign-In only works on web with signInWithPopup
-      // For mobile, we would need to use Expo AuthSession or native Google Sign-In
       if (Platform.OS === 'web') {
+        // Web: Use Firebase popup
         const { signInWithPopup } = await import('firebase/auth');
         const provider = new GoogleAuthProvider();
         await signInWithPopup(auth, provider);
-        
-        // Sync with backend after successful login
-        try {
-          await login();
-        } catch (apiError) {
-          console.warn('Failed to sync with backend:', apiError);
-          // Don't throw - Firebase auth succeeded, backend sync is optional
-        }
+      } else if (Platform.OS === 'ios') {
+        // iOS: Use native Google Sign-In
+        console.log('🔵 Starting iOS Google Sign-In...');
+
+        // Check if device supports Google Play Services (iOS always does)
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+        // Get the user's ID token
+        const { idToken } = await GoogleSignin.signIn();
+        console.log('✅ Got ID token from GoogleSignin');
+
+        // Create a Google credential with the token
+        const googleCredential = GoogleAuthProvider.credential(idToken);
+        console.log('✅ Created Google credential');
+
+        // Sign-in to Firebase with the credential
+        await signInWithCredential(auth, googleCredential);
+        console.log('✅ Signed in to Firebase with Google credential');
       } else {
-        // For mobile apps, show a helpful message
-        throw new Error('Google Sign-In is currently only available on web. Please use email/password to sign in on mobile.');
+        throw new Error('Google Sign-In is not configured for this platform. Please use email/password to sign in.');
+      }
+
+      // Sync with backend after successful login
+      try {
+        await login();
+      } catch (apiError) {
+        console.warn('Failed to sync with backend:', apiError);
+        // Don't throw - Firebase auth succeeded, backend sync is optional
       }
     } catch (error: any) {
-      console.error('Google sign in error:', error);
+      console.error('❌ Google sign in error:', error);
       throw error;
     }
   };
