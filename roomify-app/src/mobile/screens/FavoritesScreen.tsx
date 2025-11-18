@@ -5,7 +5,7 @@ import { Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Image as ExpoImage } from 'expo-image';
-import { Room, getSavedRooms, toggleSave, Collection, getCollections, getCollectionRooms } from '../services/api';
+import { Room, getSavedRooms, toggleSave, Collection, getCollections, getCollectionRooms } from '../../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const COLOR = {

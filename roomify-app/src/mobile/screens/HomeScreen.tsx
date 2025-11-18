@@ -3,8 +3,8 @@ import styled from 'styled-components/native';
 import { Dimensions, ScrollView, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image as ExpoImage } from 'expo-image';
-import { getRooms, Room, toggleSave, getSavedRooms } from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import { getRooms, Room, toggleSave, getSavedRooms } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
 const COLOR = {

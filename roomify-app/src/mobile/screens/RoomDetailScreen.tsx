@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import { ScrollView, Dimensions, Platform, Alert } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image as ExpoImage } from 'expo-image';
-import { Room, getUser, User, getCommentCount, getLikeCount, hasUserLiked, toggleLike, hasUserSaved, toggleSave, deleteRoom } from '../services/api';
+import { Room, getUser, User, getCommentCount, getLikeCount, hasUserLiked, toggleLike, hasUserSaved, toggleSave, deleteRoom } from '../../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const COLOR = {

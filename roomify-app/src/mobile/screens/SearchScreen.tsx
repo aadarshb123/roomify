@@ -15,7 +15,7 @@ import {
   getTrendingThemes,
   getEditorsPicks,
   User
-} from '../services/api';
+} from '../../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const COLOR = {

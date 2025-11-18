@@ -4,7 +4,7 @@ import { ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image as ExpoImage } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
-import { User, getFollowingList, getFollowerList } from '../services/api';
+import { User, getFollowingList, getFollowerList } from '../../services/api';
 
 const COLOR = {
   bg: '#EDE8DC',

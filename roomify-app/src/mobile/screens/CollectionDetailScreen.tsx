@@ -4,7 +4,7 @@ import { Dimensions, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Image as ExpoImage } from 'expo-image';
-import { Room, getCollectionRooms, Collection } from '../services/api';
+import { Room, getCollectionRooms, Collection } from '../../services/api';
 
 const COLOR = {
   bg: '#EDE8DC',

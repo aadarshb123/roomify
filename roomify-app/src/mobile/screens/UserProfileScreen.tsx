@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import { ScrollView, ActivityIndicator, Dimensions } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image as ExpoImage } from 'expo-image';
-import { getUser, User, getRooms, Room } from '../services/api';
+import { getUser, User, getRooms, Room } from '../../services/api';
 
 const COLOR = {
   bg: '#EDE8DC',

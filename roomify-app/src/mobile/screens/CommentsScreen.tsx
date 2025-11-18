@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components/native';
 import { ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Room, getUser, User, getComments, createComment, Comment } from '../services/api';
+import { Room, getUser, User, getComments, createComment, Comment } from '../../services/api';
 import { auth } from '../config/firebase';
 
 const COLOR = {
