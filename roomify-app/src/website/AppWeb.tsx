@@ -35,7 +35,9 @@ export default function AppWeb() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen text-foreground overflow-x-hidden bg-[#f5f0ea]">
+    <div className="flex flex-col min-h-screen text-foreground bg-[#f5f0ea] w-full overflow-x-hidden">
+
+
       
       <Navigation currentSection={currentSection} setCurrentSection={setCurrentSection} />
 
