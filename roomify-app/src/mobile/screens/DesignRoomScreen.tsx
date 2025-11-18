@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 
 export default function DesignRoomScreen() {
   return (
@@ -18,7 +18,7 @@ export default function DesignRoomScreen() {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity style={styles.button} onPress={() => Alert.alert('Coming Soon', 'AI room design feature coming soon!')}>
         <Text style={styles.buttonText}>Generate Design</Text>
       </TouchableOpacity>
     </View>

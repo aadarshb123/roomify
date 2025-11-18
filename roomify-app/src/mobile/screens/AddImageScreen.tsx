@@ -209,7 +209,7 @@ export default function AddImageScreen() {
         <PrimaryButtonText>{uploading ? 'Uploading…' : 'Save to My Pins'}</PrimaryButtonText>
       </PrimaryButton>
 
-      <SecondaryButton activeOpacity={0.9}>
+      <SecondaryButton activeOpacity={0.9} onPress={() => Alert.alert('Coming Soon', 'Share to Explore Feed feature coming soon!')} disabled={uploading}>
         <SecondaryButtonText>Share to Explore Feed</SecondaryButtonText>
       </SecondaryButton>
     </Screen>
@@ -276,9 +276,10 @@ const PrimaryButton = styled(BaseButton)`
   border: 1.5px solid ${COLOR.border};
 `;
 
-const SecondaryButton = styled(BaseButton)`
+const SecondaryButton = styled(BaseButton)<{ disabled?: boolean }>`
   background-color: ${COLOR.btnSecondary};
   border: 1.5px solid ${COLOR.border};
+  opacity: ${({ disabled }) => (disabled ? 0.5 : 1)};
 `;
 
 const DescriptionInput = styled.TextInput`

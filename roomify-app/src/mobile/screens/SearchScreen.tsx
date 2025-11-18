@@ -409,7 +409,9 @@ export default function SearchScreen() {
 
             {hasActiveFilters && (
               <ClearRow>
-                <ClearText onPress={handleClearFilters}>Clear filters</ClearText>
+                <ClearButton onPress={handleClearFilters} activeOpacity={0.7}>
+                  <ClearText>Clear filters</ClearText>
+                </ClearButton>
               </ClearRow>
             )}
           </FiltersWrap>
@@ -787,6 +789,10 @@ const FilterChipText = styled.Text<{ $active: boolean }>`
 
 const ClearRow = styled.View`
   margin-top: 4px;
+`;
+
+const ClearButton = styled.TouchableOpacity`
+  padding: 4px 0;
 `;
 
 const ClearText = styled.Text`
