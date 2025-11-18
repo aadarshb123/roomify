@@ -46,6 +46,7 @@
     "@types/react": "~19.1.0",
     "@types/styled-components-react-native": "^5.2.5",
     "autoprefixer": "^10.4.21",
+    "expo-cli": "^6.3.12",
     "postcss": "^8.5.6",
     "react-native-svg-transformer": "^1.5.1",
     "tailwindcss": "^4.1.16",

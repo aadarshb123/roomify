@@ -20,7 +20,7 @@ import { storage, db } from "../../config/firebase";
 
 export function UploadPage({ onUploaded }: { onUploaded?: () => void }) {
   const { user } = useAuth();
-
+  const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [selectedRoomType, setSelectedRoomType] = useState("living");
@@ -37,12 +37,36 @@ export function UploadPage({ onUploaded }: { onUploaded?: () => void }) {
   ];
 
   const styles = [
-    { id: "modern", name: "Modern Minimalist" },
-    { id: "scandinavian", name: "Scandinavian" },
-    { id: "industrial", name: "Industrial Chic" },
-    { id: "coastal", name: "Coastal Breeze" },
-    { id: "bohemian", name: "Bohemian" },
-    { id: "traditional", name: "Traditional" },
+    { 
+      id: 'modern', 
+      name: 'Modern Minimalist', 
+      image: 'https://images.unsplash.com/photo-1705321963943-de94bb3f0dd3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBtaW5pbWFsaXN0JTIwaW50ZXJpb3J8ZW58MXx8fHwxNzYyMDk0Mjk1fDA&ixlib=rb-4.1.0&q=80&w=1080'
+    },
+    { 
+      id: 'scandinavian', 
+      name: 'Scandinavian', 
+      image: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzY2FuZGluYXZpYW4lMjBpbnRlcmlvciUyMGRlc2lnbnxlbnwxfHx8fDE3NjIwNjg4ODl8MA&ixlib=rb-4.1.0&q=80&w=1080'
+    },
+    { 
+      id: 'industrial', 
+      name: 'Industrial Chic', 
+      image: 'https://images.unsplash.com/photo-1680209668065-26985bc92268?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmR1c3RyaWFsJTIwY2hpYyUyMGludGVyaW9yfGVufDF8fHx8MTc2MjE0NzUxMHww&ixlib=rb-4.1.0&q=80&w=1080'
+    },
+    { 
+      id: 'coastal', 
+      name: 'Coastal Breeze', 
+      image: 'https://images.unsplash.com/photo-1760067537391-cd60b1ebc597?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb2FzdGFsJTIwYmVhY2glMjBpbnRlcmlvcnxlbnwxfHx8fDE3NjIxMjU0ODJ8MA&ixlib=rb-4.1.0&q=80&w=1080'
+    },
+    { 
+      id: 'bohemian', 
+      name: 'Bohemian', 
+      image: 'https://images.unsplash.com/photo-1600493867499-4882d15a30ad?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxib2hlbWlhbiUyMGludGVyaW9yJTIwZGVjb3J8ZW58MXx8fHwxNzYyMTQ3NTExfDA&ixlib=rb-4.1.0&q=80&w=1080'
+    },
+    { 
+      id: 'traditional', 
+      name: 'Traditional', 
+      image: 'https://images.unsplash.com/photo-1732971941082-c8f30eda7e07?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cmFkaXRpb25hbCUyMGNsYXNzaWMlMjBpbnRlcmlvcnxlbnwxfHx8fDE3NjIxNDc1MTF8MA&ixlib=rb-4.1.0&q=80&w=1080'
+    },
   ];
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,6 +100,7 @@ export function UploadPage({ onUploaded }: { onUploaded?: () => void }) {
         roomType: selectedRoomType,
         style: selectedStyle,
         public: isPublic,
+        description: description,
         createdAt: serverTimestamp(),
       });
 
@@ -151,47 +176,99 @@ export function UploadPage({ onUploaded }: { onUploaded?: () => void }) {
         </div>
       </div>
 
-      {/* STYLE */}
-      <div className="bg-white rounded-2xl p-8 shadow-lg mb-10">
-        <h3 className="text-xl mb-4 font-semibold">Style</h3>
-        <div className="grid grid-cols-2 gap-4">
-          {styles.map((style) => (
-            <button
-              key={style.id}
-              onClick={() => setSelectedStyle(style.id)}
-              className={`p-3 rounded-xl border-2 ${
-                selectedStyle === style.id
-                  ? "border-[#c97b63] bg-[#c97b63]/10"
-                  : "border-black/10 bg-white"
-              }`}
-            >
-              {style.name}
-            </button>
-          ))}
+          {/* Style Selection */}
+          <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <Palette className="w-6 h-6 text-[#c97b63]" />
+              <h3 className="text-xl">Choose Your Style</h3>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {styles.map((style) => (
+                <motion.button
+                  key={style.id}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setSelectedStyle(style.id)}
+                  className={`p-4 rounded-xl border-2 transition-all overflow-hidden ${
+                    selectedStyle === style.id
+                      ? 'border-[#c97b63] bg-[#c97b63]/10 shadow-lg'
+                      : 'border-black/10 bg-white/50'
+                  }`}
+                >
+                  <div className="relative w-full h-16 rounded-lg mb-3 overflow-hidden">
+                    <img 
+                      src={style.image} 
+                      alt={style.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <p className="text-sm">{style.name}</p>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+
+          {/* PRIVACY TOGGLE */}
+          <div className="bg-white rounded-2xl p-8 shadow-lg mb-10 mt-10">
+            <h3 className="text-xl mb-4 font-semibold">Visibility</h3>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* PUBLIC OPTION */}
+              <button
+                onClick={() => setIsPublic(true)}
+                className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all
+                  ${isPublic 
+                    ? "border-[#c97b63] bg-[#c97b63]/10 shadow-lg" 
+                    : "border-black/10 bg-white"
+                  }`}
+              >
+                <Eye className="w-6 h-6" />
+                <p className="text-sm font-medium">Public</p>
+                <p className="text-xs text-black/50">Anyone can see</p>
+              </button>
+
+              {/* PRIVATE OPTION */}
+              <button
+                onClick={() => setIsPublic(false)}
+                className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all
+                  ${!isPublic 
+                    ? "border-[#c97b63] bg-[#c97b63]/10 shadow-lg" 
+                    : "border-black/10 bg-white"
+                  }`}
+              >
+                <EyeOff className="w-6 h-6" />
+                <p className="text-sm font-medium">Private</p>
+                <p className="text-xs text-black/50">Only you</p>
+              </button>
+            </div>
+          </div>
+
+        {/* DESCRIPTION BOX */}
+        <div className="bg-white rounded-2xl p-8 shadow-lg mb-10">
+          <h3 className="text-xl mb-4 font-semibold">Description</h3>
+
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add a description..."
+            className="
+              w-full 
+              h-32 
+              p-4 
+              rounded-xl 
+              border-2 
+              border-black/10 
+              focus:border-[#c97b63] 
+              focus:ring-2 
+              focus:ring-[#c97b63]/30 
+              outline-none 
+              resize-none
+              text-sm
+              bg-white
+            "
+          />
         </div>
-      </div>
-
-      {/* PRIVACY TOGGLE */}
-      <div className="bg-white rounded-2xl p-8 shadow-lg mb-10">
-        <h3 className="text-xl mb-4 font-semibold">Visibility</h3>
-
-        <button
-          onClick={() => setIsPublic(!isPublic)}
-          className="flex items-center gap-3 px-6 py-3 rounded-xl bg-black/5 hover:bg-black/10 transition"
-        >
-          {isPublic ? (
-            <>
-              <Eye className="w-5 h-5 text-[#c97b63]" />
-              <span>Public (anyone can see)</span>
-            </>
-          ) : (
-            <>
-              <EyeOff className="w-5 h-5 text-black/50" />
-              <span>Private (only you)</span>
-            </>
-          )}
-        </button>
-      </div>
 
       {/* SUBMIT */}
       <div className="text-center">
