@@ -7,7 +7,7 @@ import { Hero } from "./components/Hero";
 import { FeaturedProjects } from "./components/FeaturedProjects";
 import { CommunityShowcase } from "./components/CommunityShowcase";
 import { Footer } from "./components/Footer";
-
+import { AIDesignStudio } from "./components/AIDesignStudio";
 import { ExplorePage } from "./components/ExplorePage";
 import { UploadPage } from "./components/UploadPage";
 import { ProfilePage } from "./components/ProfilePage";
@@ -89,6 +89,20 @@ export default function AppWeb() {
               transition={{ duration: 0.3 }}
             >
               <UploadPage />
+            </motion.div>
+          )}
+
+          {/* ==================== AI STUDIO ==================== */}
+          {currentSection === "ai-studio" && (
+            <motion.div
+              key="ai-studio"
+              className="tab-wrapper"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+            <AIDesignStudio />
             </motion.div>
           )}
 

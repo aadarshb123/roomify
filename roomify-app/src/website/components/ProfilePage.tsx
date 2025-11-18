@@ -102,7 +102,7 @@ export function ProfilePage({ setCurrentSection, setSelectedImage }: any) {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-linear-to-br from-[#c97b63] to-[#d4956f] rounded-3xl p-12 mb-12 text-white shadow-2xl"
+          className="bg-linear-to-br from-[#636ac9] to-[#d4956f] rounded-3xl p-12 mb-12 text-white shadow-2xl"
         >
           <div className="flex items-start justify-between mb-8">
             <div className="flex items-center gap-6">
