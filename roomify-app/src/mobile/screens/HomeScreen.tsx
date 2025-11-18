@@ -1,8 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import styled from 'styled-components/native';
-import { Dimensions, ScrollView } from 'react-native';
+import { Dimensions, ScrollView, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image as ExpoImage } from 'expo-image';
+import { getRooms, Room, toggleSave, getSavedRooms } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
 
 const COLOR = {
   bg: '#EDE8DC',
@@ -16,35 +19,150 @@ const COLOR = {
   shadow: '#000000',
 };
 
-const CATEGORIES = ['All', 'Bedroom', 'Kitchen', 'Living Room', 'Home Decor'] as const;
-
-const DATA = [
-  { id: '1', uri: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200', h: 240 },
-  { id: '2', uri: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1200', h: 200 },
-  { id: '3', uri: 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=1200', h: 300 },
-  { id: '4', uri: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200', h: 180 },
-  { id: '5', uri: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1200', h: 260 },
-  { id: '6', uri: 'https://images.unsplash.com/photo-1615874694520-474822394e73?w=1200', h: 210 },
-  { id: '7', uri: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=1200', h: 240 },
-  { id: '8', uri: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200', h: 280 },
-];
+const CATEGORIES = [
+  'All',
+  'Bedroom',
+  'Kitchen',
+  'Living Room',
+  'Bathroom',
+  'Dining Room',
+  'Home Office',
+  'Home Decor',
+  'Outdoor',
+  'Kids Room',
+] as const;
 
 const { width } = Dimensions.get('window');
 const H_PADDING = 16;
 const GUTTER = 14;
 const MAX_CONTENT = 860; // keeps grid centered & lovely on tablets
 const COL_W = (Math.min(width, MAX_CONTENT) - H_PADDING * 2 - GUTTER) / 2;
-const CHIP_MAX_W = 120;
+const CHIP_MAX_W = 130;
 
 export default function HomeScreen() {
   const [selected, setSelected] = useState<(typeof CATEGORIES)[number]>('All');
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [savedRoomIds, setSavedRoomIds] = useState<Set<string>>(new Set());
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const navigation = useNavigation<any>();
+
+  // Load saved rooms to track which ones are favorited
+  useEffect(() => {
+    const loadSavedRooms = async () => {
+      if (!user) {
+        setSavedRoomIds(new Set());
+        return;
+      }
+
+      try {
+        const savedRooms = await getSavedRooms();
+        const savedIds = new Set(savedRooms.map(room => room.id));
+        setSavedRoomIds(savedIds);
+      } catch (err) {
+        console.error('Error loading saved rooms:', err);
+      }
+    };
+
+    loadSavedRooms();
+  }, [user]);
+
+  // Refresh saved rooms when screen comes into focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', async () => {
+      if (!user) {
+        setSavedRoomIds(new Set());
+        return;
+      }
+
+      try {
+        const savedRooms = await getSavedRooms();
+        const savedIds = new Set(savedRooms.map(room => room.id));
+        setSavedRoomIds(savedIds);
+      } catch (err) {
+        console.error('Error loading saved rooms:', err);
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, user]);
+
+  // Fetch rooms from backend
+  useEffect(() => {
+    const fetchRooms = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const roomType = selected === 'All' ? undefined : selected;
+        const response = await getRooms({ roomType, limit: 50 });
+        
+        // Transform rooms to include height for layout
+        const roomsWithHeight = response.rooms.map((room) => ({
+          ...room,
+          h: Math.floor(Math.random() * 120) + 180, // Random height between 180-300
+        })) as (Room & { h: number })[];
+        
+        setRooms(roomsWithHeight as any);
+      } catch (err: any) {
+        console.error('Error fetching rooms:', err);
+        setError(err.message);
+        setRooms([]); // No fallback - show empty state
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRooms();
+  }, [user, selected]);
+
+  // Handle heart toggle
+  const handleToggleFavorite = async (roomId: string, e: any) => {
+    e.stopPropagation();
+    
+    if (!user) {
+      return;
+    }
+
+    try {
+      // Optimistic update
+      const isCurrentlySaved = savedRoomIds.has(roomId);
+      const newSavedIds = new Set(savedRoomIds);
+      
+      if (isCurrentlySaved) {
+        newSavedIds.delete(roomId);
+      } else {
+        newSavedIds.add(roomId);
+      }
+      setSavedRoomIds(newSavedIds);
+
+      // Sync with Firebase
+      await toggleSave(roomId);
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+      // Revert optimistic update on error
+      const isCurrentlySaved = savedRoomIds.has(roomId);
+      const newSavedIds = new Set(savedRoomIds);
+      if (isCurrentlySaved) {
+        newSavedIds.add(roomId);
+      } else {
+        newSavedIds.delete(roomId);
+      }
+      setSavedRoomIds(newSavedIds);
+    }
+  };
 
   const filtered = useMemo(() => {
-    if (selected === 'All') return DATA;
-    // hook up real filtering later; keep UX stable now
-    return DATA;
-  }, [selected]);
+    if (loading) return [];
+    return rooms;
+  }, [rooms, loading]) as (Room & { h?: number })[];
 
   const left = filtered.filter((_, i) => i % 2 === 0);
   const right = filtered.filter((_, i) => i % 2 === 1);
@@ -66,7 +184,7 @@ export default function HomeScreen() {
           <Pills
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: H_PADDING, gap: 6 }}
+            contentContainerStyle={{ paddingHorizontal: H_PADDING, gap: 10 }}
           >
             {CATEGORIES.map((c) => {
               const active = c === selected;
@@ -81,36 +199,86 @@ export default function HomeScreen() {
 
         {/* Centered grid wrapper to remove the right bias */}
         <Content>
-          <Grid>
-            <Column>
-              {left.map((item) => (
-                <CardShadow key={item.id}>
-                  <Card activeOpacity={0.85}>
-                    <CardImg
-                      source={{ uri: item.uri }}
-                      style={{ width: COL_W, height: item.h, borderRadius: 14 }}
-                      contentFit="cover"
-                      transition={120}
-                    />
-                  </Card>
-                </CardShadow>
-              ))}
-            </Column>
-            <Column>
-              {right.map((item) => (
-                <CardShadow key={item.id}>
-                  <Card activeOpacity={0.85}>
-                    <CardImg
-                      source={{ uri: item.uri }}
-                      style={{ width: COL_W, height: item.h, borderRadius: 14 }}
-                      contentFit="cover"
-                      transition={120}
-                    />
-                  </Card>
-                </CardShadow>
-              ))}
-            </Column>
-          </Grid>
+          {loading ? (
+            <LoadingContainer>
+              <ActivityIndicator size="large" color={COLOR.text} />
+            </LoadingContainer>
+          ) : error ? (
+            <EmptyContainer>
+              <EmptyText>Error loading rooms</EmptyText>
+              <EmptySubtext>{error}</EmptySubtext>
+            </EmptyContainer>
+          ) : filtered.length === 0 ? (
+            <EmptyContainer>
+              <EmptyText>No rooms found</EmptyText>
+              <EmptySubtext>Create some rooms in Firestore to see them here</EmptySubtext>
+            </EmptyContainer>
+          ) : (
+            <Grid>
+              <Column>
+                {left.map((item) => {
+                  const isSaved = savedRoomIds.has(item.id);
+                  return (
+                    <CardShadow key={item.id}>
+                      <Card 
+                        activeOpacity={0.85}
+                        onPress={() => navigation.navigate('RoomDetail', { room: item })}
+                      >
+                        <CardImg
+                          source={{ uri: item.uri }}
+                          style={{ width: COL_W, height: item.h || 240, borderRadius: 14 }}
+                          contentFit="cover"
+                          transition={120}
+                        />
+                        <HeartButton
+                          activeOpacity={0.8}
+                          onPress={(e) => handleToggleFavorite(item.id, e)}
+                        >
+                          <HeartIcon 
+                            source={isSaved 
+                              ? require('../../../assets/icons/filledheart-white.png')
+                              : require('../../../assets/icons/heart.png')
+                            } 
+                          />
+                        </HeartButton>
+                      </Card>
+                    </CardShadow>
+                  );
+                })}
+              </Column>
+              <Column>
+                {right.map((item) => {
+                  const isSaved = savedRoomIds.has(item.id);
+                  return (
+                    <CardShadow key={item.id}>
+                      <Card 
+                        activeOpacity={0.85}
+                        onPress={() => navigation.navigate('RoomDetail', { room: item })}
+                      >
+                        <CardImg
+                          source={{ uri: item.uri }}
+                          style={{ width: COL_W, height: item.h || 240, borderRadius: 14 }}
+                          contentFit="cover"
+                          transition={120}
+                        />
+                        <HeartButton
+                          activeOpacity={0.8}
+                          onPress={(e) => handleToggleFavorite(item.id, e)}
+                        >
+                          <HeartIcon 
+                            source={isSaved 
+                              ? require('../../../assets/icons/filledheart-white.png')
+                              : require('../../../assets/icons/heart.png')
+                            } 
+                          />
+                        </HeartButton>
+                      </Card>
+                    </CardShadow>
+                  );
+                })}
+              </Column>
+            </Grid>
+          )}
         </Content>
       </ScrollView>
     </Screen>
@@ -184,10 +352,12 @@ const Pills = styled.ScrollView`
 
 const Chip = styled.TouchableOpacity<{ $active: boolean }>`
   max-width: ${CHIP_MAX_W}px;
-  padding: 8px 14px;
+  padding: 9px 16px;
   border-radius: 20px;
   background-color: ${(props: { $active: boolean }) => (props.$active ? COLOR.chipSelectedBg : COLOR.chipBg)};
   border: 1px solid ${COLOR.text};       /* mirrors LoginScreen field/CTA border */
+  justify-content: center;
+  align-items: center;
 `;
 
 const ChipText = styled.Text<{ $active: boolean }>`
@@ -217,4 +387,45 @@ const Card = styled.TouchableOpacity`
 
 const CardImg = styled(ExpoImage)`
   background-color: #f2f2f2;
+`;
+
+const HeartButton = styled.TouchableOpacity`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 6px;
+  z-index: 10;
+`;
+
+const HeartIcon = styled.Image`
+  width: 22px;
+  height: 22px;
+  resize-mode: contain;
+  opacity: 0.9;
+`;
+
+const LoadingContainer = styled.View`
+  padding: 60px 20px;
+  align-items: center;
+  justify-content: center;
+`;
+
+const EmptyContainer = styled.View`
+  padding: 80px 20px;
+  align-items: center;
+  justify-content: center;
+`;
+
+const EmptyText = styled.Text`
+  font-size: 18px;
+  font-weight: 600;
+  color: ${COLOR.text};
+  margin-bottom: 8px;
+`;
+
+const EmptySubtext = styled.Text`
+  font-size: 14px;
+  color: ${COLOR.text};
+  opacity: 0.6;
+  text-align: center;
 `;

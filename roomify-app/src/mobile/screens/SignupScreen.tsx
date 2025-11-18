@@ -12,6 +12,7 @@ const COLOR = {
   white: '#FFFFFF',
   border: '#111827',
   overlay: 'rgba(230,218,201,0.9)',
+  hint: '#9CA3AF',
 };
 
 const BG_URI = 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1600';
@@ -20,36 +21,38 @@ export default function SignupScreen({ navigation }: any) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { signUp, signInWithGoogle } = useAuth();
+  const { signUp, signInWithGoogle, loading } = useAuth();
 
   const handleSignup = async () => {
     if (!name || !email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      Alert.alert('Error', 'Enter a valid email');
+      return;
+    }
     if (password.length < 6) {
       Alert.alert('Error', 'Password must be at least 6 characters');
       return;
     }
-    setLoading(true);
     try {
       await signUp(email, password, name);
+
+      // If your app does NOT auto-switch stacks based on `user`, navigate now:
+      // Change 'Root' to your main navigator name (e.g., 'HomeTabs', 'AppTabs', etc.)
+      navigation.reset({ index: 0, routes: [{ name: 'Root' }] });
     } catch (error: any) {
       Alert.alert('Signup Failed', error.message);
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    setLoading(true);
     try {
       await signInWithGoogle();
+      navigation.reset({ index: 0, routes: [{ name: 'Root' }] });
     } catch (error: any) {
       Alert.alert('Google Sign In Failed', error.message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -62,14 +65,14 @@ export default function SignupScreen({ navigation }: any) {
         <FormGroup>
           <Field
             placeholder="Name"
-            placeholderTextColor="#999"
+            placeholderTextColor={COLOR.hint}
             autoCapitalize="words"
             value={name}
             onChangeText={setName}
           />
           <Field
             placeholder="Email"
-            placeholderTextColor="#999"
+            placeholderTextColor={COLOR.hint}
             autoCapitalize="none"
             keyboardType="email-address"
             value={email}
@@ -77,7 +80,7 @@ export default function SignupScreen({ navigation }: any) {
           />
           <Field
             placeholder="Password"
-            placeholderTextColor="#999"
+            placeholderTextColor={COLOR.hint}
             secureTextEntry
             value={password}
             onChangeText={setPassword}
@@ -101,9 +104,9 @@ export default function SignupScreen({ navigation }: any) {
 
           <BottomLinks>
             <Muted>ALREADY HAVE AN ACCOUNT?</Muted>
-            <Underline onPress={() => navigation.navigate('Login')}>
-              LOG IN
-            </Underline>
+            <UnderlineButton onPress={() => navigation.navigate('Login')}>
+              <Underline>LOG IN</Underline>
+            </UnderlineButton>
           </BottomLinks>
         </FormGroup>
       </Container>
@@ -230,6 +233,8 @@ const Muted = styled.Text`
   opacity: 0.85;
   font-size: 14px;
 `;
+
+const UnderlineButton = styled.TouchableOpacity``;
 
 const Underline = styled.Text`
   color: ${COLOR.text};

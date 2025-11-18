@@ -96,9 +96,9 @@ export default function LoginScreen({ navigation }: any) {
 
         <BottomLinks>
           <Muted>DON'T HAVE AN ACCOUNT?</Muted>
-          <Underline onPress={() => navigation.navigate('Signup')}>
-            CREATE ACCOUNT
-          </Underline>
+          <UnderlineButton onPress={() => navigation.navigate('Signup')}>
+            <Underline>CREATE ACCOUNT</Underline>
+          </UnderlineButton>
         </BottomLinks>
         </FormGroup>
       </Container>
@@ -239,6 +239,8 @@ const Muted = styled.Text`
   opacity: 0.85;
   font-size: 14px;
 `;
+
+const UnderlineButton = styled.TouchableOpacity``;
 
 const Underline = styled.Text`
   color: ${COLOR.text};

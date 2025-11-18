@@ -1,7 +1,22 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import styled from 'styled-components/native';
-import { TextInput, Dimensions } from 'react-native';
+import { TextInput, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { Image as ExpoImage } from 'expo-image';
+import { 
+  getRooms, 
+  Room, 
+  getSearchHistory, 
+  saveSearchHistory,
+  getTrendingRooms,
+  getTopCreators,
+  getPersonalizedRecommendations,
+  getTrendingThemes,
+  getEditorsPicks,
+  User
+} from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 const COLOR = {
   bg: '#EDE8DC',
@@ -23,9 +38,9 @@ const RESULTS_GUTTER = 14;
 const RESULTS_COL_W = (W - RESULTS_H_PADDING * 2 - RESULTS_GUTTER) / 2;
 
 /* ---------- filter options ---------- */
-const ROOM_TYPES = ['Bedroom', 'Living Room', 'Kitchen', 'Home Office'] as const;
-const COLORS = ['Neutral', 'Dark', 'Colorful'] as const;
-const STYLES = ['Modern', 'Cozy', 'Minimalist', 'Scandinavian'] as const;
+const ROOM_TYPES = ['Bedroom', 'Kitchen', 'Living Room', 'Bathroom', 'Dining Room', 'Home Office', 'Home Decor', 'Outdoor', 'Kids Room'] as const;
+const COLORS = ['Neutral', 'Dark', 'Colorful', 'Light', 'Warm', 'Cool'] as const;
+const STYLES = ['Modern', 'Cozy', 'Minimalist', 'Scandinavian', 'Industrial', 'Rustic', 'Bohemian', 'Traditional'] as const;
 
 type RoomType = (typeof ROOM_TYPES)[number];
 type ColorType = (typeof COLORS)[number];
@@ -95,23 +110,145 @@ const SEARCH_ITEMS = [
 
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const navigation = useNavigation();
 
   const [query, setQuery] = useState('');
   const [roomFilter, setRoomFilter] = useState<RoomType | null>(null);
   const [colorFilter, setColorFilter] = useState<ColorType | null>(null);
   const [styleFilter, setStyleFilter] = useState<StyleType | null>(null);
   const [showHistory, setShowHistory] = useState(false);
-  const [history, setHistory] = useState<string[]>([
-    'cozy bedroom',
-    'minimalist living room',
-    'neutral kitchen',
-  ]);
+  const [history, setHistory] = useState<string[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [useBackend, setUseBackend] = useState(false);
+  
+  // Featured sections data
+  const [trendingRooms, setTrendingRooms] = useState<Room[]>([]);
+  const [topCreators, setTopCreators] = useState<Array<{ user: User; roomCount: number; sampleRoom?: Room }>>([]);
+  const [personalizedRooms, setPersonalizedRooms] = useState<Room[]>([]);
+  const [trendingThemes, setTrendingThemes] = useState<Array<{ theme: string; roomCount: number; sampleRoom?: Room }>>([]);
+  const [editorsPicks, setEditorsPicks] = useState<Room[]>([]);
+  const [loadingFeatured, setLoadingFeatured] = useState(false);
 
   const hasActiveFilters =
     !!query.trim() || roomFilter !== null || colorFilter !== null || styleFilter !== null;
 
-  /* ---------- frontend search logic ---------- */
+  // Load search history from Firebase
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (!user) {
+        setHistory([]);
+        return;
+      }
+
+      try {
+        const savedHistory = await getSearchHistory();
+        setHistory(savedHistory);
+      } catch (error) {
+        console.error('Error loading search history:', error);
+      }
+    };
+
+    loadHistory();
+  }, [user]);
+
+  // Load featured sections data
+  useEffect(() => {
+    const loadFeaturedSections = async () => {
+      if (!user) {
+        return;
+      }
+
+      try {
+        setLoadingFeatured(true);
+        const [trending, creators, personalized, themes, picks] = await Promise.all([
+          getTrendingRooms(2),
+          getTopCreators(4),
+          getPersonalizedRecommendations(3),
+          getTrendingThemes(3),
+          getEditorsPicks(3),
+        ]);
+
+        setTrendingRooms(trending);
+        setTopCreators(creators);
+        setPersonalizedRooms(personalized);
+        setTrendingThemes(themes);
+        setEditorsPicks(picks);
+      } catch (error) {
+        console.error('Error loading featured sections:', error);
+      } finally {
+        setLoadingFeatured(false);
+      }
+    };
+
+    loadFeaturedSections();
+  }, [user]);
+
+  // Fetch rooms from backend when filters are applied
+  useEffect(() => {
+    const fetchRooms = async () => {
+      if (!user || !hasActiveFilters) {
+        setUseBackend(false);
+        setRooms([]);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setUseBackend(true);
+        
+        const response = await getRooms({
+          roomType: roomFilter || undefined,
+          color: colorFilter || undefined,
+          style: styleFilter || undefined,
+          limit: 50,
+        });
+        
+        // Filter by query if provided (backend doesn't support text search yet)
+        let filtered = response.rooms;
+        if (query.trim()) {
+          const q = query.trim().toLowerCase();
+          filtered = filtered.filter((room) =>
+            room.title?.toLowerCase().includes(q) ||
+            room.description?.toLowerCase().includes(q)
+          );
+        }
+        
+        setRooms(filtered);
+      } catch (err: any) {
+        console.error('Error fetching rooms from Firestore:', err);
+        // If it's an index error, the getRooms function should handle it gracefully
+        // But if it still fails, fall back to frontend search
+        if (err.message?.includes('index') || err.code === 'failed-precondition') {
+          console.warn('⚠️ Firestore index missing, falling back to frontend search');
+        }
+        setUseBackend(false);
+        setRooms([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRooms();
+  }, [user, roomFilter, colorFilter, styleFilter, query, hasActiveFilters]);
+
+  /* ---------- frontend search logic (fallback) ---------- */
   const filteredItems = useMemo(() => {
+    if (useBackend) {
+      // Transform backend rooms to match frontend format
+      return rooms.map((room) => ({
+        id: room.id,
+        title: room.title,
+        image: room.uri,
+        height: 220,
+        roomType: room.roomType as RoomType | undefined,
+        color: room.color as ColorType | undefined,
+        style: room.style as StyleType | undefined,
+      }));
+    }
+    
+    // Fallback to static data
     return SEARCH_ITEMS.filter((item) => {
       if (query.trim()) {
         const q = query.trim().toLowerCase();
@@ -122,26 +259,24 @@ export default function SearchScreen() {
       if (styleFilter && item.style !== styleFilter) return false;
       return true;
     });
-  }, [query, roomFilter, colorFilter, styleFilter]);
+  }, [rooms, useBackend, query, roomFilter, colorFilter, styleFilter]);
 
-  /* ---------- backend-ready params ---------- */
-  const searchParams = {
-    query: query.trim() || undefined,
-    roomType: roomFilter || undefined,
-    color: colorFilter || undefined,
-    style: styleFilter || undefined,
-  };
-  // TODO: later: use searchParams to call backend API (e.g. /search)
-
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const q = query.trim();
     if (!q) return;
-    setHistory((prev) => {
-      const next = [q, ...prev.filter((h) => h !== q)];
-      return next.slice(0, 6);
-    });
+    
+    const updatedHistory = [q, ...history.filter((h) => h !== q)].slice(0, 10);
+    setHistory(updatedHistory);
     setShowHistory(false);
-    // in the future: trigger backend request here
+    
+    // Save to Firebase
+    if (user) {
+      try {
+        await saveSearchHistory(updatedHistory);
+      } catch (error) {
+        console.error('Error saving search history:', error);
+      }
+    }
   };
 
   const handleSelectHistory = (term: string) => {
@@ -172,6 +307,7 @@ export default function SearchScreen() {
               value={query}
               onChangeText={setQuery}
               onFocus={() => setShowHistory(true)}
+              onBlur={() => setTimeout(() => setShowHistory(false), 200)}
               onSubmitEditing={handleSubmit}
               returnKeyType="search"
             />
@@ -179,7 +315,7 @@ export default function SearchScreen() {
           </SearchInner>
 
           {/* search history dropdown (inline) */}
-          {showHistory && history.length > 0 && !hasActiveFilters && (
+          {showHistory && history.length > 0 && (
             <HistoryCard>
               {history.map((term) => (
                 <HistoryRow
@@ -189,9 +325,19 @@ export default function SearchScreen() {
                 >
                   <HistoryText numberOfLines={1}>{term}</HistoryText>
                   <HistoryDeleteButton
-                    onPress={(e) => {
-                      e.stopPropagation(); // don’t trigger select
-                      setHistory((prev) => prev.filter((h) => h !== term));
+                    onPress={async (e) => {
+                      e.stopPropagation(); // don't trigger select
+                      const updatedHistory = history.filter((h) => h !== term);
+                      setHistory(updatedHistory);
+                      
+                      // Save to Firebase
+                      if (user) {
+                        try {
+                          await saveSearchHistory(updatedHistory);
+                        } catch (error) {
+                          console.error('Error saving search history:', error);
+                        }
+                      }
                     }}
                     activeOpacity={0.7}
                   >
@@ -275,41 +421,93 @@ export default function SearchScreen() {
             <ResultsHeader>
               <ResultsTitle>Search results</ResultsTitle>
               <ResultsMeta>
-                {filteredItems.length} result{filteredItems.length !== 1 ? 's' : ''}
+                {loading ? 'Loading...' : `${filteredItems.length} result${filteredItems.length !== 1 ? 's' : ''}`}
               </ResultsMeta>
             </ResultsHeader>
 
-            {filteredItems.length === 0 ? (
+            {loading ? (
+              <LoadingContainer>
+                <ActivityIndicator size="large" color={COLOR.text} />
+              </LoadingContainer>
+            ) : filteredItems.length === 0 ? (
               <EmptyHint>Try changing filters or search terms.</EmptyHint>
             ) : (
               <ResultsGrid>
                 <ResultsColumn>
                   {filteredItems
                     .filter((_, i) => i % 2 === 0)
-                    .map((item) => (
-                      <CardShadow key={item.id}>
-                        <CardClip activeOpacity={0.85}>
-                          <ResultImg
-                            source={{ uri: item.image }}
-                            style={{ height: item.height, width: RESULTS_COL_W }}
-                          />
-                        </CardClip>
-                      </CardShadow>
-                    ))}
+                    .map((item) => {
+                      // Find the full room object if available
+                      const fullRoom = useBackend ? rooms.find(r => r.id === item.id) : null;
+                      return (
+                        <CardShadow key={item.id}>
+                          <CardClip 
+                            activeOpacity={0.85}
+                            onPress={() => {
+                              if (fullRoom) {
+                                navigation.navigate('RoomDetail' as never, { room: fullRoom } as never);
+                              } else {
+                                // Fallback: create a minimal room object from item
+                                const room: Room = {
+                                  id: item.id,
+                                  title: item.title || '',
+                                  uri: item.image,
+                                  roomType: item.roomType,
+                                  color: item.color,
+                                  style: item.style,
+                                  userId: '',
+                                  createdAt: new Date(),
+                                };
+                                navigation.navigate('RoomDetail' as never, { room } as never);
+                              }
+                            }}
+                          >
+                            <ResultImg
+                              source={{ uri: item.image }}
+                              style={{ height: item.height, width: RESULTS_COL_W }}
+                            />
+                          </CardClip>
+                        </CardShadow>
+                      );
+                    })}
                 </ResultsColumn>
                 <ResultsColumn>
                   {filteredItems
                     .filter((_, i) => i % 2 === 1)
-                    .map((item) => (
-                      <CardShadow key={item.id}>
-                        <CardClip activeOpacity={0.85}>
-                          <ResultImg
-                            source={{ uri: item.image }}
-                            style={{ height: item.height, width: RESULTS_COL_W }}
-                          />
-                        </CardClip>
-                      </CardShadow>
-                    ))}
+                    .map((item) => {
+                      // Find the full room object if available
+                      const fullRoom = useBackend ? rooms.find(r => r.id === item.id) : null;
+                      return (
+                        <CardShadow key={item.id}>
+                          <CardClip 
+                            activeOpacity={0.85}
+                            onPress={() => {
+                              if (fullRoom) {
+                                navigation.navigate('RoomDetail' as never, { room: fullRoom } as never);
+                              } else {
+                                // Fallback: create a minimal room object from item
+                                const room: Room = {
+                                  id: item.id,
+                                  title: item.title || '',
+                                  uri: item.image,
+                                  roomType: item.roomType,
+                                  color: item.color,
+                                  style: item.style,
+                                  userId: '',
+                                  createdAt: new Date(),
+                                };
+                                navigation.navigate('RoomDetail' as never, { room } as never);
+                              }
+                            }}
+                          >
+                            <ResultImg
+                              source={{ uri: item.image }}
+                              style={{ height: item.height, width: RESULTS_COL_W }}
+                            />
+                          </CardClip>
+                        </CardShadow>
+                      );
+                    })}
                 </ResultsColumn>
               </ResultsGrid>
             )}
@@ -322,49 +520,82 @@ export default function SearchScreen() {
               <Section>
                 <SectionTitle>Trending now</SectionTitle>
                 <SectionSub>What everyone's searching for right now</SectionSub>
-                <Row gap={12}>
-                  {TRENDING_IMAGES.map((item) => (
-                    <Flex1 key={item.id}>
-                      <CardShadow>
-                        <CardClip>
-                          <Img style={{ height: 220 }} source={{ uri: item.image }} />
-                        </CardClip>
-                      </CardShadow>
-                    </Flex1>
-                  ))}
-                </Row>
+                {loadingFeatured ? (
+                  <LoadingContainer>
+                    <ActivityIndicator size="small" color={COLOR.text} />
+                  </LoadingContainer>
+                ) : trendingRooms.length > 0 ? (
+                  <Row gap={12}>
+                    {trendingRooms.map((room) => (
+                      <Flex1 key={room.id}>
+                        <CardShadow>
+                          <CardClip 
+                            activeOpacity={0.85}
+                            onPress={() => navigation.navigate('RoomDetail' as never, { room } as never)}
+                          >
+                            <Img style={{ height: 220 }} source={{ uri: room.uri }} />
+                          </CardClip>
+                        </CardShadow>
+                      </Flex1>
+                    ))}
+                  </Row>
+                ) : (
+                  <EmptySectionText>No trending rooms yet</EmptySectionText>
+                )}
               </Section>
 
               <Section>
                 <SectionTitle>Trending themes</SectionTitle>
                 <SectionSub>Curated moodboards you'll love</SectionSub>
-                <Row gap={12}>
-                  {TRENDING_THEMES.map((item) => (
-                    <Flex1 key={item.id}>
-                      <CardShadow>
-                        <CardClip>
-                          <Img style={{ height: 100 }} source={{ uri: item.image }} />
-                        </CardClip>
-                      </CardShadow>
-                    </Flex1>
-                  ))}
-                </Row>
+                {loadingFeatured ? (
+                  <LoadingContainer>
+                    <ActivityIndicator size="small" color={COLOR.text} />
+                  </LoadingContainer>
+                ) : trendingThemes.length > 0 ? (
+                  <Row gap={12}>
+                    {trendingThemes.map((theme) => (
+                      <Flex1 key={theme.theme}>
+                        <CardShadow>
+                          <CardClip 
+                            activeOpacity={0.85}
+                            onPress={() => theme.sampleRoom && navigation.navigate('RoomDetail' as never, { room: theme.sampleRoom } as never)}
+                          >
+                            <Img style={{ height: 100 }} source={{ uri: theme.sampleRoom?.uri || '' }} />
+                          </CardClip>
+                        </CardShadow>
+                      </Flex1>
+                    ))}
+                  </Row>
+                ) : (
+                  <EmptySectionText>No themes yet</EmptySectionText>
+                )}
               </Section>
 
               <Section>
                 <SectionTitle>Editor&apos;s pick: This month</SectionTitle>
                 <SectionSub>A fresh design story every month</SectionSub>
-                <Row gap={12}>
-                  {TRENDING_THEMES.map((item) => (
-                    <Flex1 key={item.id}>
-                      <CardShadow>
-                        <CardClip>
-                          <Img style={{ height: 100 }} source={{ uri: item.image }} />
-                        </CardClip>
-                      </CardShadow>
-                    </Flex1>
-                  ))}
-                </Row>
+                {loadingFeatured ? (
+                  <LoadingContainer>
+                    <ActivityIndicator size="small" color={COLOR.text} />
+                  </LoadingContainer>
+                ) : editorsPicks.length > 0 ? (
+                  <Row gap={12}>
+                    {editorsPicks.map((room) => (
+                      <Flex1 key={room.id}>
+                        <CardShadow>
+                          <CardClip 
+                            activeOpacity={0.85}
+                            onPress={() => navigation.navigate('RoomDetail' as never, { room } as never)}
+                          >
+                            <Img style={{ height: 100 }} source={{ uri: room.uri }} />
+                          </CardClip>
+                        </CardShadow>
+                      </Flex1>
+                    ))}
+                  </Row>
+                ) : (
+                  <EmptySectionText>No editor picks this month</EmptySectionText>
+                )}
               </Section>
             </LeftCol>
 
@@ -373,30 +604,59 @@ export default function SearchScreen() {
               <Section>
                 <SectionTitle>Creator spotlight</SectionTitle>
                 <SectionSub>Top creators and their inspiring ideas</SectionSub>
-                <Wrap gap={10}>
-                  {CREATOR_SPOTLIGHT.map((item) => (
-                    <Half key={item.id}>
-                      <CardShadow>
-                        <CardClip>
-                          <Img style={{ height: 80 }} source={{ uri: item.image }} />
-                        </CardClip>
-                      </CardShadow>
-                    </Half>
-                  ))}
-                </Wrap>
+                {loadingFeatured ? (
+                  <LoadingContainer>
+                    <ActivityIndicator size="small" color={COLOR.text} />
+                  </LoadingContainer>
+                ) : topCreators.length > 0 ? (
+                  <Wrap gap={10}>
+                    {topCreators.map((creator, index) => (
+                      <Half key={creator.user.id || index}>
+                        <CardShadow>
+                          <CardClip 
+                            activeOpacity={0.85}
+                            onPress={() => creator.user.id && navigation.navigate('UserProfile' as never, { userId: creator.user.id } as never)}
+                          >
+                            {creator.sampleRoom ? (
+                              <Img style={{ height: 80 }} source={{ uri: creator.sampleRoom.uri }} />
+                            ) : (
+                              <PlaceholderImg style={{ height: 80 }} />
+                            )}
+                          </CardClip>
+                        </CardShadow>
+                      </Half>
+                    ))}
+                  </Wrap>
+                ) : (
+                  <EmptySectionText>No creators yet</EmptySectionText>
+                )}
               </Section>
 
               <Section>
                 <SectionTitle>Ideas you might like</SectionTitle>
-                <Col gap={12}>
-                  {IDEAS_YOU_MIGHT_LIKE.map((item) => (
-                    <CardShadow key={item.id}>
-                      <CardClip>
-                        <Img style={{ height: item.height }} source={{ uri: item.image }} />
-                      </CardClip>
-                    </CardShadow>
-                  ))}
-                </Col>
+                {loadingFeatured ? (
+                  <LoadingContainer>
+                    <ActivityIndicator size="small" color={COLOR.text} />
+                  </LoadingContainer>
+                ) : personalizedRooms.length > 0 ? (
+                  <Col gap={12}>
+                    {personalizedRooms.map((room, index) => (
+                      <CardShadow key={room.id}>
+                        <CardClip 
+                          activeOpacity={0.85}
+                          onPress={() => navigation.navigate('RoomDetail' as never, { room } as never)}
+                        >
+                          <Img 
+                            style={{ height: index === 0 ? 200 : 150 }} 
+                            source={{ uri: room.uri }} 
+                          />
+                        </CardClip>
+                      </CardShadow>
+                    ))}
+                  </Col>
+                ) : (
+                  <EmptySectionText>Like some rooms to get personalized recommendations</EmptySectionText>
+                )}
               </Section>
             </RightCol>
           </ContentRow>
@@ -604,15 +864,32 @@ const CardShadow = styled.View`
   elevation: 5;
 `;
 
-const CardClip = styled.TouchableOpacity.attrs({ activeOpacity: 0.85 })`
+const CardClip = styled.TouchableOpacity`
   overflow: hidden;
   border-radius: 14px;
   background-color: ${COLOR.cardBg};
 `;
 
-const Img = styled.Image`
+const Img = styled(ExpoImage)`
   width: 100%;
+  height: 100%;
   background-color: #f2f2f2;
+`;
+
+const PlaceholderImg = styled.View`
+  width: 100%;
+  height: 100%;
+  background-color: ${COLOR.cardBg};
+  justify-content: center;
+  align-items: center;
+`;
+
+const EmptySectionText = styled.Text`
+  font-size: 14px;
+  color: ${COLOR.subtext};
+  text-align: center;
+  padding: 20px;
+  font-style: italic;
 `;
 
 /* Results view */
@@ -657,4 +934,10 @@ const EmptyHint = styled.Text`
   font-size: 12px;
   color: ${COLOR.subtext};
   margin-top: 8px;
+`;
+
+const LoadingContainer = styled.View`
+  padding: 60px 20px;
+  align-items: center;
+  justify-content: center;
 `;
